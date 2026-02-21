@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Planner - Phase 6 Design Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            'card-foreground': 'var(--card-foreground)',
+            primary: 'var(--primary)',
+            'primary-foreground': 'var(--primary-foreground)',
+            secondary: 'var(--secondary)',
+            'secondary-foreground': 'var(--secondary-foreground)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+            accent: 'var(--accent)',
+            'accent-foreground': 'var(--accent-foreground)',
+            destructive: 'var(--destructive)',
+            border: 'var(--border)',
+            input: 'var(--input)',
+            ring: 'var(--ring)',
+          },
+          borderRadius: {
+            lg: '0.625rem',
+            md: '0.425rem',
+            sm: '0.225rem',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --background: #ffffff;
+      --foreground: #1a1a1a;
+      --card: #ffffff;
+      --card-foreground: #1a1a1a;
+      --primary: #2a2a2a;
+      --primary-foreground: #fafafa;
+      --secondary: #f5f5f5;
+      --secondary-foreground: #2a2a2a;
+      --muted: #f5f5f5;
+      --muted-foreground: #808080;
+      --accent: #f5f5f5;
+      --accent-foreground: #2a2a2a;
+      --destructive: #dc2626;
+      --border: #e5e5e5;
+      --input: #e5e5e5;
+      --ring: #a3a3a3;
+    }
+
+    .dark {
+      --background: #1a1a1a;
+      --foreground: #fafafa;
+      --card: #2a2a2a;
+      --card-foreground: #fafafa;
+      --primary: #e5e5e5;
+      --primary-foreground: #2a2a2a;
+      --secondary: #3a3a3a;
+      --secondary-foreground: #fafafa;
+      --muted: #3a3a3a;
+      --muted-foreground: #a3a3a3;
+      --accent: #3a3a3a;
+      --accent-foreground: #fafafa;
+      --destructive: #ef4444;
+      --border: rgba(255,255,255,0.1);
+      --input: rgba(255,255,255,0.15);
+      --ring: #808080;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* shadcn-style button */
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      padding: 0.5rem 1rem;
+      border-radius: 0.425rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--foreground);
+      padding: 0.5rem 1rem;
+      border-radius: 0.425rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-outline:hover { background-color: var(--accent); }
+
+    .btn-ghost {
+      background-color: transparent;
+      color: var(--foreground);
+      padding: 0.5rem 1rem;
+      border-radius: 0.425rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-ghost:hover { background-color: var(--accent); }
+
+    /* shadcn-style input */
+    .input-field {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--input);
+      border-radius: 0.425rem;
+      font-size: 0.875rem;
+      background-color: transparent;
+      color: var(--foreground);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-sizing: border-box;
+    }
+    .input-field:focus {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 2px var(--ring);
+    }
+    .input-field::placeholder {
+      color: var(--muted-foreground);
+    }
+
+    /* shadcn-style card */
+    .card {
+      background-color: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.625rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* shadcn-style label */
+    .label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+
+    /* Nav link */
+    .nav-link {
+      color: var(--muted-foreground);
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.425rem;
+      transition: color 0.15s, background-color 0.15s;
+    }
+    .nav-link:hover {
+      color: var(--foreground);
+      background-color: var(--accent);
+    }
+    .nav-link.active {
+      color: var(--foreground);
+    }
+
+    /* Screen section styling */
+    .screen-section {
+      border-bottom: 2px dashed var(--border);
+      padding-bottom: 3rem;
+      margin-bottom: 3rem;
+    }
+    .screen-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted-foreground);
+      margin-bottom: 1.5rem;
+      padding: 0.25rem 0.75rem;
+      background-color: var(--muted);
+      border-radius: 9999px;
+      display: inline-block;
+    }
+
+    /* Tab navigation for prototype */
+    .proto-tabs {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      background-color: var(--muted);
+      border-radius: 0.625rem;
+      margin-bottom: 2rem;
+    }
+    .proto-tab {
+      padding: 0.5rem 1rem;
+      border-radius: 0.425rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      background-color: transparent;
+      color: var(--muted-foreground);
+      transition: all 0.15s;
+    }
+    .proto-tab.active {
+      background-color: var(--background);
+      color: var(--foreground);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .proto-tab:hover:not(.active) {
+      color: var(--foreground);
+    }
+
+    /* Screen containers */
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+  <!-- Prototype controls bar -->
+  <div style="background-color: var(--muted); border-bottom: 1px solid var(--border); padding: 1rem;">
+    <div style="max-width: 72rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span style="font-weight: 700; font-size: 0.875rem;">Phase 6 Design Prototype</span>
+        <span style="color: var(--muted-foreground); font-size: 0.75rem; margin-left: 0.5rem;">Meal Planner</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="proto-tabs" style="margin-bottom: 0;">
+          <button class="proto-tab active" onclick="showScreen('login')">Login</button>
+          <button class="proto-tab" onclick="showScreen('register')">Register</button>
+          <button class="proto-tab" onclick="showScreen('home')">Home</button>
+          <button class="proto-tab" onclick="showScreen('shell')">App Shell</button>
+        </div>
+        <button class="btn-outline" onclick="toggleDark()" style="width: auto; padding: 0.375rem 0.75rem; font-size: 0.75rem;" id="darkToggle">
+          Toggle Dark Mode
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="screen-login" class="screen active">
+    <div style="min-height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+      <div style="width: 100%; max-width: 24rem;">
+        <div class="card" style="padding: 2rem;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0;">Meal Planner</h1>
+            <p style="color: var(--muted-foreground); font-size: 0.875rem; margin: 0;">Welcome back</p>
+          </div>
+
+          <!-- Form -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div>
+              <label class="label" style="display: block; margin-bottom: 0.375rem;">Email</label>
+              <input type="email" class="input-field" placeholder="name@example.com">
+            </div>
+            <div>
+              <label class="label" style="display: block; margin-bottom: 0.375rem;">Password</label>
+              <input type="password" class="input-field" placeholder="Enter your password">
+            </div>
+            <button class="btn-primary" style="margin-top: 0.25rem;">Sign In</button>
+          </div>
+
+          <!-- Footer -->
+          <p style="text-align: center; font-size: 0.875rem; color: var(--muted-foreground); margin-top: 1.5rem; margin-bottom: 0;">
+            Don't have an account?
+            <a href="#" onclick="showScreen('register'); return false;" style="color: var(--foreground); font-weight: 500; text-decoration: underline; text-underline-offset: 4px;">Register</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== REGISTER SCREEN ==================== -->
+  <div id="screen-register" class="screen">
+    <div style="min-height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+      <div style="width: 100%; max-width: 24rem;">
+        <div class="card" style="padding: 2rem;">
+          <!-- Header -->
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0;">Meal Planner</h1>
+            <p style="color: var(--muted-foreground); font-size: 0.875rem; margin: 0;">Create your account</p>
+          </div>
+
+          <!-- Form -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div>
+              <label class="label" style="display: block; margin-bottom: 0.375rem;">Email</label>
+              <input type="email" class="input-field" placeholder="name@example.com">
+            </div>
+            <div>
+              <label class="label" style="display: block; margin-bottom: 0.375rem;">Password</label>
+              <input type="password" class="input-field" placeholder="Min. 8 characters">
+            </div>
+            <div>
+              <label class="label" style="display: block; margin-bottom: 0.375rem;">Confirm Password</label>
+              <input type="password" class="input-field" placeholder="Re-enter your password">
+            </div>
+            <button class="btn-primary" style="margin-top: 0.25rem;">Create Account</button>
+          </div>
+
+          <!-- Footer -->
+          <p style="text-align: center; font-size: 0.875rem; color: var(--muted-foreground); margin-top: 1.5rem; margin-bottom: 0;">
+            Already have an account?
+            <a href="#" onclick="showScreen('login'); return false;" style="color: var(--foreground); font-weight: 500; text-decoration: underline; text-underline-offset: 4px;">Sign in</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HOME SCREEN (with app shell) ==================== -->
+  <div id="screen-home" class="screen">
+    <!-- Header -->
+    <header style="border-bottom: 1px solid var(--border); position: sticky; top: 0; background-color: var(--background); z-index: 50;">
+      <div style="max-width: 56rem; margin: 0 auto; padding: 0 1rem; height: 3.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 2rem;">
+          <a href="#" style="font-weight: 700; font-size: 1.125rem; text-decoration: none; color: var(--foreground);">Meal Planner</a>
+          <nav style="display: flex; align-items: center; gap: 0.25rem;">
+            <a href="#" class="nav-link active" onclick="return false;">Home</a>
+            <a href="#" class="nav-link" onclick="return false;">Profile</a>
+            <a href="#" class="nav-link" onclick="return false;">History</a>
+          </nav>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button class="btn-ghost" style="padding: 0.375rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;" title="Toggle dark mode">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </button>
+          <button class="btn-ghost" style="font-size: 0.875rem;">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Home content: Welcome / CTA -->
+    <main style="max-width: 56rem; margin: 0 auto; padding: 3rem 1rem;">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh;">
+        <div class="card" style="padding: 3rem; text-align: center; max-width: 28rem; width: 100%;">
+          <!-- Icon placeholder -->
+          <div style="width: 3rem; height: 3rem; border-radius: 0.625rem; background-color: var(--muted); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted-foreground);"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+          </div>
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem 0;">Welcome to Meal Planner</h2>
+          <p style="color: var(--muted-foreground); font-size: 0.875rem; margin: 0 0 1.5rem 0; line-height: 1.5;">
+            Set up your dietary profile to start generating AI-powered meals tailored to your nutritional targets.
+          </p>
+          <button class="btn-primary" style="width: auto; padding: 0.5rem 1.5rem;">Set Up Profile</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== APP SHELL DEMO (with sample content) ==================== -->
+  <div id="screen-shell" class="screen">
+    <!-- Header (same as home) -->
+    <header style="border-bottom: 1px solid var(--border); position: sticky; top: 0; background-color: var(--background); z-index: 50;">
+      <div style="max-width: 56rem; margin: 0 auto; padding: 0 1rem; height: 3.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 2rem;">
+          <a href="#" style="font-weight: 700; font-size: 1.125rem; text-decoration: none; color: var(--foreground);">Meal Planner</a>
+          <nav style="display: flex; align-items: center; gap: 0.25rem;">
+            <a href="#" class="nav-link" onclick="return false;">Home</a>
+            <a href="#" class="nav-link active" onclick="return false;">Profile</a>
+            <a href="#" class="nav-link" onclick="return false;">History</a>
+          </nav>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button class="btn-ghost" style="padding: 0.375rem; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;" title="Toggle dark mode">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </button>
+          <button class="btn-ghost" style="font-size: 0.875rem;">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sample content area showing the layout structure -->
+    <main style="max-width: 56rem; margin: 0 auto; padding: 2rem 1rem;">
+      <div style="margin-bottom: 1.5rem;">
+        <h1 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 0.25rem 0;">Profile</h1>
+        <p style="color: var(--muted-foreground); font-size: 0.875rem; margin: 0;">Manage your dietary preferences and nutritional targets.</p>
+      </div>
+
+      <!-- Sample card: Macro targets -->
+      <div class="card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin: 0 0 1rem 0;">Nutritional Targets</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1rem;">
+          <div>
+            <label class="label" style="display: block; margin-bottom: 0.375rem;">Calories</label>
+            <input type="number" class="input-field" value="2200" placeholder="kcal">
+          </div>
+          <div>
+            <label class="label" style="display: block; margin-bottom: 0.375rem;">Protein (g)</label>
+            <input type="number" class="input-field" value="150" placeholder="grams">
+          </div>
+          <div>
+            <label class="label" style="display: block; margin-bottom: 0.375rem;">Carbs (g)</label>
+            <input type="number" class="input-field" value="250" placeholder="grams">
+          </div>
+          <div>
+            <label class="label" style="display: block; margin-bottom: 0.375rem;">Fat (g)</label>
+            <input type="number" class="input-field" value="70" placeholder="grams">
+          </div>
+        </div>
+      </div>
+
+      <!-- Sample card: Dietary restrictions preview -->
+      <div class="card" style="padding: 1.5rem; margin-bottom: 1rem;">
+        <h3 style="font-size: 1rem; font-weight: 600; margin: 0 0 1rem 0;">Dietary Restrictions</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <span style="background-color: var(--secondary); color: var(--secondary-foreground); padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500;">Vegetarian</span>
+          <span style="background-color: var(--secondary); color: var(--secondary-foreground); padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500;">Gluten-free</span>
+          <span style="background-color: var(--secondary); color: var(--secondary-foreground); padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500;">Dairy-free</span>
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn-primary" style="width: auto; padding: 0.5rem 1.5rem;">Save Profile</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== TOAST DEMO ==================== -->
+  <div id="toast" style="display: none; position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100;">
+    <div class="card" style="padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 16rem;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #22c55e; flex-shrink: 0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+      <span style="font-size: 0.875rem; font-weight: 500;">Profile saved successfully</span>
+    </div>
+  </div>
+
+  <script>
+    // Tab navigation
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.proto-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('screen-' + name).classList.add('active');
+      // Find and activate the matching tab
+      document.querySelectorAll('.proto-tab').forEach(t => {
+        if (t.textContent.toLowerCase() === name.toLowerCase() ||
+            (name === 'shell' && t.textContent === 'App Shell')) {
+          t.classList.add('active');
+        }
+      });
+      // Show toast demo on shell screen
+      if (name === 'shell') {
+        setTimeout(() => {
+          const toast = document.getElementById('toast');
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }, 1000);
+      }
+    }
+
+    // Dark mode toggle
+    function toggleDark() {
+      document.documentElement.classList.toggle('dark');
+    }
+
+    // Respect system preference on load
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+</body>
+</html>

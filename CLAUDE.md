@@ -22,6 +22,11 @@ Monorepo with npm workspaces:
 - **tsx watch** for server dev (not ts-node or nodemon)
 - **npm** as package manager (not pnpm or yarn)
 
+## Design
+- **Style guide**: `design/decisions.md` is the persistent style guide for all UI work (Phases 6–9). Consult it before building any frontend component. When a design decision is made or changed (layout, spacing, color, component choice, screen-specific convention), update `decisions.md` to reflect it.
+- **Wireframes**: `design/wireframes.md` has ASCII wireframes for reference
+- **Prototype**: `design/prototype.html` is a standalone visual mockup (open in browser)
+
 ## Client
 - Vite config proxies `/api` requests to `http://localhost:3001`
 - shadcn/ui components go in `src/components/ui/`
