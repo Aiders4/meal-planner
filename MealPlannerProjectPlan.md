@@ -368,9 +368,9 @@ Each phase introduces **one major new concept**. Complete each phase fully befor
 **You learn**: Setting up your development environment and third-party accounts before writing any code.
 
 **What to do:**
-1. Create a new GitHub repository called `meal-planner` (public, with a README)
-2. Clone it to your local machine
-3. Save this file as `PROJECT_PLAN.md` in the repo root — Claude Code can reference it directly during each phase
+1. Create a new GitHub repository called `meal-planner` (public, with a README) - done
+2. Clone it to your local machine - done
+3. Save this file as `PROJECT_PLAN.md` in the repo root — Claude Code can reference it directly during each phase - done
 4. Sign up for an Anthropic API account at [console.anthropic.com](https://console.anthropic.com) - done
 5. Generate an API key and save it somewhere secure (you'll need it in Phase 5) - done
 6. Set a spending limit on your Anthropic account — £5/month is plenty for development - done
