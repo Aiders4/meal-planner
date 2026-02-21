@@ -33,9 +33,13 @@ Monorepo with npm workspaces:
 - Health check: `GET /api/health` returns `{ status: "ok" }`
 
 ## Progress
-- Phases 1–4 complete (scaffolding, database, auth, profile API)
-- Phase 5 next: AI meal generation (`@anthropic-ai/sdk`)
-- `zod` already installed in server (used for profile validation)
+- Phases 1–5 complete (scaffolding, database, auth, profile API, AI meal generation)
+- `zod` already installed in server (used for profile and meals validation)
+- `@anthropic-ai/sdk` installed in server (AI service uses claude-haiku-4-5 with forced tool_use)
+
+## Future / Production Hardening
+- Rate limiting on `POST /api/meals/generate` — each call costs money (Anthropic API); add before any public deployment
+- CORS lockdown, HTTPS, other production security measures
 
 ## Conventions
 - Keep commits small and focused — one per meaningful change

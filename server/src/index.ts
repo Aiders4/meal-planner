@@ -7,6 +7,7 @@ dotenv.config();
 import './db/connection.js';
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profile.js';
+import mealsRoutes from './routes/meals.js';
 import { errorHandler } from './middleware/error.js';
 
 const app = express();
@@ -21,6 +22,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/meals', mealsRoutes);
 
 app.use(errorHandler);
 

@@ -65,7 +65,13 @@ console.log('\n8. Creating meals...');
 const meal1 = createMeal(user.id, {
   title: 'Chicken Stir Fry',
   description: 'Quick and healthy chicken stir fry with vegetables',
-  ingredients: ['chicken breast', 'broccoli', 'soy sauce', 'garlic', 'rice'],
+  ingredients: [
+    { name: 'chicken breast', quantity: 200, unit: 'g' },
+    { name: 'broccoli', quantity: 1, unit: 'cup' },
+    { name: 'soy sauce', quantity: 2, unit: 'tbsp' },
+    { name: 'garlic', quantity: 3, unit: 'cloves' },
+    { name: 'rice', quantity: 1, unit: 'cup' },
+  ],
   instructions: ['Cut chicken into cubes', 'Stir fry vegetables', 'Add sauce', 'Serve over rice'],
   calories: 450,
   protein_g: 35,
@@ -79,7 +85,13 @@ console.log('   Meal 1:', meal1);
 const meal2 = createMeal(user.id, {
   title: 'Pasta Primavera',
   description: 'Vegetable pasta with light sauce',
-  ingredients: ['penne', 'zucchini', 'bell pepper', 'tomato', 'olive oil'],
+  ingredients: [
+    { name: 'penne', quantity: 200, unit: 'g' },
+    { name: 'zucchini', quantity: 1, unit: 'medium' },
+    { name: 'bell pepper', quantity: 1, unit: 'whole' },
+    { name: 'tomato', quantity: 2, unit: 'medium' },
+    { name: 'olive oil', quantity: 2, unit: 'tbsp' },
+  ],
   instructions: ['Cook pasta', 'Saute vegetables', 'Combine and season'],
   calories: 520,
   protein_g: 18,

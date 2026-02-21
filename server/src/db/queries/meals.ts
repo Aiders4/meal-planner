@@ -20,7 +20,7 @@ export interface Meal {
 export interface MealData {
   title: string;
   description?: string | null;
-  ingredients: string[];
+  ingredients: Array<{ name: string; quantity: number; unit: string }>;
   instructions: string[];
   calories?: number | null;
   protein_g?: number | null;
@@ -60,7 +60,7 @@ export function createMeal(userId: number, data: MealData): Meal {
   return getMealById(result.lastInsertRowid as number)!;
 }
 
-function getMealById(id: number): Meal | undefined {
+export function getMealById(id: number): Meal | undefined {
   const stmt = db.prepare('SELECT * FROM meals WHERE id = ?');
   return stmt.get(id) as Meal | undefined;
 }
@@ -105,4 +105,28 @@ export function updateMealStatus(
   );
   const result = stmt.run(status, mealId, userId);
   return result.changes > 0;
+}
+
+export function countMealsByUser(userId: number, filters?: { status?: string }): number {
+  const conditions = ['user_id = ?'];
+  const params: (string | number)[] = [userId];
+
+  if (filters?.status) {
+    conditions.push('status = ?');
+    params.push(filters.status);
+  }
+
+  const stmt = db.prepare(
+    `SELECT COUNT(*) as count FROM meals WHERE ${conditions.join(' AND ')}`
+  );
+  const row = stmt.get(...params) as { count: number };
+  return row.count;
+}
+
+export function getRecentAcceptedMealTitles(userId: number, limit: number = 10): string[] {
+  const stmt = db.prepare(
+    `SELECT title FROM meals WHERE user_id = ? AND status = 'accepted' ORDER BY created_at DESC LIMIT ?`
+  );
+  const rows = stmt.all(userId, limit) as { title: string }[];
+  return rows.map(r => r.title);
 }
