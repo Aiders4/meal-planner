@@ -32,6 +32,11 @@ Monorepo with npm workspaces:
 - Environment variables loaded from `server/.env` (not committed — use `.env.example` as template)
 - Health check: `GET /api/health` returns `{ status: "ok" }`
 
+## Progress
+- Phases 1–4 complete (scaffolding, database, auth, profile API)
+- Phase 5 next: AI meal generation (`@anthropic-ai/sdk`)
+- `zod` already installed in server (used for profile validation)
+
 ## Conventions
 - Keep commits small and focused — one per meaningful change
 - All API routes are prefixed with `/api`

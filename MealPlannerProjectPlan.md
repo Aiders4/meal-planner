@@ -69,7 +69,6 @@ meal-planner/
 │   │   └── main.tsx
 │   ├── index.html
 │   ├── package.json
-│   ├── tailwind.config.ts
 │   ├── tsconfig.json
 │   └── vite.config.ts
 ├── server/                    # Express backend
