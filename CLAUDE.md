@@ -31,6 +31,13 @@ Monorepo with npm workspaces:
 - Vite config proxies `/api` requests to `http://localhost:3001`
 - shadcn/ui components go in `src/components/ui/`
 - Add new shadcn components with: `npx shadcn@latest add <component>` (run from `client/`)
+- `src/lib/api.ts` — fetch wrapper with auth header, 401 redirect, `ApiError`
+- `src/context/AuthContext.tsx` — `AuthProvider`, `useAuth()`, login/register/logout
+- `src/hooks/useDarkMode.ts` — dark mode toggle with localStorage
+- `src/components/layout/AppLayout.tsx` — app shell with header, nav, `<Outlet />`
+- `src/pages/` — LoginPage, RegisterPage, HomePage
+- Routes: `/login`, `/register`, `/` (home), `/profile` (placeholder), `/history` (placeholder)
+- `erasableSyntaxOnly` is enabled in client tsconfig — use explicit property declaration + constructor assignment, not `public` parameter properties
 
 ## Server
 - Entry point: `server/src/index.ts`
@@ -38,9 +45,11 @@ Monorepo with npm workspaces:
 - Health check: `GET /api/health` returns `{ status: "ok" }`
 
 ## Progress
-- Phases 1–5 complete (scaffolding, database, auth, profile API, AI meal generation)
+- Phases 1–6 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth)
 - `zod` already installed in server (used for profile and meals validation)
 - `@anthropic-ai/sdk` installed in server (AI service uses claude-haiku-4-5 with forced tool_use)
+- Client dependencies added in Phase 6: `react-router-dom`, `sonner` (toast notifications)
+- shadcn/ui components installed: button, input, label, card, sonner
 
 ## Future / Production Hardening
 - Rate limiting on `POST /api/meals/generate` — each call costs money (Anthropic API); add before any public deployment
