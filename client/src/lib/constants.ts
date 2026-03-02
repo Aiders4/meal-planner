@@ -1,0 +1,22 @@
+// Mirrors server-side allowedRestrictions in server/src/routes/profile.ts
+export const ALLOWED_RESTRICTIONS: Record<string, string[]> = {
+  lifestyle: ['vegetarian', 'vegan', 'pescatarian', 'flexitarian'],
+  allergy: [
+    'gluten', 'dairy', 'nuts', 'peanuts', 'tree-nuts', 'eggs',
+    'shellfish', 'fish', 'soy', 'sesame', 'celery', 'mustard',
+    'lupin', 'molluscs',
+  ],
+  religious: ['halal', 'kosher'],
+  medical: ['low-sodium', 'low-sugar', 'diabetic-friendly', 'low-fodmap'],
+}
+
+export const ALLOWED_CUISINES = [
+  'Italian', 'Mexican', 'Chinese', 'Japanese', 'Indian', 'Thai',
+  'Mediterranean', 'Korean', 'Vietnamese', 'French', 'Greek',
+  'Middle Eastern', 'American', 'Ethiopian', 'Caribbean',
+]
+
+export const COOK_TIME_MIN = 15
+export const COOK_TIME_MAX = 120
+export const COOK_TIME_STEP = 5
+export const COOK_TIME_DEFAULT = 60

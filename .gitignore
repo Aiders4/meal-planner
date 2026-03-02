@@ -6,6 +6,7 @@ node_modules/
 
 # Database
 *.db
+server/data/
 
 # Build output
 dist/

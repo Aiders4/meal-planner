@@ -29,13 +29,13 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - `card` - auth forms, home page CTA
 - `sonner` - toast notifications for errors/success (shadcn recommends sonner over their toast)
 
-### Phase 7 Components (planned)
+### Phase 7 Components
 - `checkbox` - dietary restrictions multi-select
-- `slider` - cook time selector
-- `badge` - disliked ingredients tags, cuisine tags
-- `separator` - section dividers in profile
-- `select` - dropdowns if needed
-- `tabs` - restriction category grouping
+- `slider` - cook time selector (15–120 min, step 5)
+- `badge` - disliked ingredients tags (secondary + X), cuisine toggles (default/outline)
+- `separator` - divider between page header and form sections
+- `tabs` - restriction category grouping (lifestyle/allergy/religious/medical)
+- `select` - not needed in Phase 7 (tabs replaced dropdown use case)
 
 ### Phase 8 Components (planned)
 - `progress` - macro target bars
@@ -71,6 +71,18 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - Centered card with welcome message
 - CTA button linking to profile setup
 - Will be replaced by meal generation UI in Phase 8
+
+### Profile Page (Phase 7)
+- Page header: `text-2xl font-bold` title + `text-muted-foreground` subtitle, separated by `<Separator />`
+- Sections stacked vertically with `gap-6`, each inside a `<Card>`
+- **Macro Targets**: 2×2 grid (`grid-cols-1 sm:grid-cols-2`), number inputs with `inputMode="numeric"`, all optional (empty = null)
+- **Dietary Restrictions**: `<Tabs>` with 4 categories, checkboxes in 2-col grid, composite key format `"category:value"`
+- **Cuisine Preferences**: Clickable `<Badge>` toggles — `variant="default"` when selected, `variant="outline"` when not
+- **Disliked Ingredients**: Text input + Add button, removable `<Badge variant="secondary">` with X icon, validates non-empty/≤100 chars/no duplicates
+- **Cook Time**: `<Slider>` (15–120 min, step 5) with centered value label below
+- **Save button**: `size="lg"`, full-width on mobile, right-aligned on sm+, saves all 3 endpoints in parallel via `Promise.all`
+- Validation: client-side mirrors server rules, inline `text-sm text-destructive` errors below fields
+- Toast: `toast.success` on save, `toast.error` on failure
 
 ## Color Palette Reference
 

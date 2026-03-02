@@ -35,8 +35,11 @@ Monorepo with npm workspaces:
 - `src/context/AuthContext.tsx` — `AuthProvider`, `useAuth()`, login/register/logout
 - `src/hooks/useDarkMode.ts` — dark mode toggle with localStorage
 - `src/components/layout/AppLayout.tsx` — app shell with header, nav, `<Outlet />`
-- `src/pages/` — LoginPage, RegisterPage, HomePage
-- Routes: `/login`, `/register`, `/` (home), `/profile` (placeholder), `/history` (placeholder)
+- `src/lib/constants.ts` — `ALLOWED_RESTRICTIONS`, `ALLOWED_CUISINES`, cook time bounds (mirrors server)
+- `src/types/profile.ts` — `ProfileResponse`, `ProfileFormState` interfaces
+- `src/pages/` — LoginPage, RegisterPage, HomePage, ProfilePage
+- `src/pages/profile/` — MacroTargetsSection, DietaryRestrictionsSection, CuisinePreferencesSection, DislikedIngredientsSection, CookTimeSection
+- Routes: `/login`, `/register`, `/` (home), `/profile`, `/history` (placeholder)
 - `erasableSyntaxOnly` is enabled in client tsconfig — use explicit property declaration + constructor assignment, not `public` parameter properties
 
 ## Server
@@ -45,11 +48,12 @@ Monorepo with npm workspaces:
 - Health check: `GET /api/health` returns `{ status: "ok" }`
 
 ## Progress
-- Phases 1–6 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth)
+- Phases 1–7 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page)
 - `zod` already installed in server (used for profile and meals validation)
 - `@anthropic-ai/sdk` installed in server (AI service uses claude-haiku-4-5 with forced tool_use)
 - Client dependencies added in Phase 6: `react-router-dom`, `sonner` (toast notifications)
-- shadcn/ui components installed: button, input, label, card, sonner
+- shadcn/ui components installed: button, input, label, card, sonner, checkbox, slider, badge, separator, tabs
+- Next up: Phase 8 (Meal Generation UI) — needs shadcn `progress`, `accordion`, `skeleton`, `alert`
 
 ## Future / Production Hardening
 - Rate limiting on `POST /api/meals/generate` — each call costs money (Anthropic API); add before any public deployment
