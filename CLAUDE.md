@@ -37,8 +37,10 @@ Monorepo with npm workspaces:
 - `src/components/layout/AppLayout.tsx` — app shell with header, nav, `<Outlet />`
 - `src/lib/constants.ts` — `ALLOWED_RESTRICTIONS`, `ALLOWED_CUISINES`, cook time bounds (mirrors server)
 - `src/types/profile.ts` — `ProfileResponse`, `ProfileFormState` interfaces
+- `src/types/meal.ts` — `Ingredient`, `Meal`, `GenerateResponse`, `MacroTargets` interfaces
 - `src/pages/` — LoginPage, RegisterPage, HomePage, ProfilePage
 - `src/pages/profile/` — MacroTargetsSection, DietaryRestrictionsSection, CuisinePreferencesSection, DislikedIngredientsSection, CookTimeSection
+- `src/pages/home/` — NoProfileAlert, GenerateButton, MacroBarsSection, IngredientsSection, InstructionsSection, MealActionButtons, MealCard
 - Routes: `/login`, `/register`, `/` (home), `/profile`, `/history` (placeholder)
 - `erasableSyntaxOnly` is enabled in client tsconfig — use explicit property declaration + constructor assignment, not `public` parameter properties
 
@@ -47,13 +49,35 @@ Monorepo with npm workspaces:
 - Environment variables loaded from `server/.env` (not committed — use `.env.example` as template)
 - Health check: `GET /api/health` returns `{ status: "ok" }`
 
+### Server API Routes (already implemented)
+- `POST /api/auth/register` — `{ email, password }` → `{ token, user }`
+- `POST /api/auth/login` — `{ email, password }` → `{ token, user }`
+- `GET /api/profile` — returns `{ profile, dietary_restrictions, disliked_ingredients }`
+- `PUT /api/profile` — upsert macro targets + cook time + cuisine prefs
+- `PUT /api/profile/restrictions` — replace all dietary restrictions
+- `PUT /api/profile/disliked-ingredients` — replace all disliked ingredients
+- `POST /api/meals/generate` — calls Claude API, returns `{ meal, warnings }`
+- `GET /api/meals?status=accepted&limit=20&offset=0` — paginated meal history, returns `{ meals: Meal[], total: number }`. Each meal has parsed `ingredients` (array) and `instructions` (array). Filter by `status` (optional), paginate with `limit`/`offset`.
+- `PATCH /api/meals/:id` — `{ status: 'accepted' | 'rejected' }` → `{ meal }`
+
 ## Progress
-- Phases 1–7 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page)
+- Phases 1–8 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page, meal generation UI)
 - `zod` already installed in server (used for profile and meals validation)
 - `@anthropic-ai/sdk` installed in server (AI service uses claude-haiku-4-5 with forced tool_use)
 - Client dependencies added in Phase 6: `react-router-dom`, `sonner` (toast notifications)
-- shadcn/ui components installed: button, input, label, card, sonner, checkbox, slider, badge, separator, tabs
-- Next up: Phase 8 (Meal Generation UI) — needs shadcn `progress`, `accordion`, `skeleton`, `alert`
+- shadcn/ui components installed: button, input, label, card, sonner, checkbox, slider, badge, separator, tabs, progress, accordion, skeleton, alert
+- Next up: Phase 9 (Meal History) — see spec below
+
+## Phase 9 Spec: Meal History
+Build a `/history` page (replace current placeholder) showing past generated meals:
+1. **Filter tabs**: All / Accepted / Rejected (use existing `tabs` component or simple button group)
+2. **Compact meal cards**: title, macros summary, date, status badge — click to expand full details
+3. **Pagination**: 20 meals per page, "Load more" button or page navigation
+4. **Empty state**: message if no meals exist yet
+- Server endpoint ready: `GET /api/meals?status=...&limit=20&offset=0` → `{ meals, total }`
+- Reuse: `Meal` type from `src/types/meal.ts`, `api()` from `src/lib/api.ts`, existing meal card sub-components from `src/pages/home/`
+- shadcn components to install: `pagination`, `dropdown-menu` (for sort/filter if needed)
+- Follow orchestrator pattern: HistoryPage manages state, child components are pure display
 
 ## Future / Production Hardening
 - Rate limiting on `POST /api/meals/generate` — each call costs money (Anthropic API); add before any public deployment

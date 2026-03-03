@@ -37,11 +37,11 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - `tabs` - restriction category grouping (lifestyle/allergy/religious/medical)
 - `select` - not needed in Phase 7 (tabs replaced dropdown use case)
 
-### Phase 8 Components (planned)
-- `progress` - macro target bars
-- `accordion` - collapsible instructions
-- `skeleton` - loading state for meal generation
-- `alert` - profile setup prompt
+### Phase 8 Components
+- `progress` - macro target bars (calories, protein, carbs, fat vs targets)
+- `accordion` - collapsible instructions section in meal card
+- `skeleton` - loading state placeholder (installed, available for future use)
+- `alert` - no-profile prompt with link to profile setup
 
 ### Phase 9 Components (planned)
 - `pagination` - meal history pagination
@@ -67,10 +67,20 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - Mobile: Hamburger icon replaces nav links, opens vertical menu
 - Active nav link gets subtle highlight (underline or background)
 
-### Home Page (Phase 6 stub)
-- Centered card with welcome message
-- CTA button linking to profile setup
-- Will be replaced by meal generation UI in Phase 8
+### Home Page — Meal Generation (Phase 8)
+- No profile: `<Alert>` with "Profile Required" title and link to `/profile`, `max-w-lg` centered
+- With profile, no meal: Centered heading + description + "Generate Meal" button
+- Generating: Button shows inline spinner + "Creating your meal..."
+- Meal displayed: `<Card>` with `max-w-2xl` containing:
+  1. **CardHeader**: title, description, cuisine + cook time `<Badge variant="secondary">`
+  2. **Macro bars**: `grid-cols-1 sm:grid-cols-2`, each bar has label, "actual / target" text, `<Progress>` fill clamped 0-100%. If no target: show actual only with "No target set" muted text.
+  3. `<Separator />`
+  4. **Ingredients**: list of `{quantity} {unit} {name}`. If >6 items, first 6 + ghost button toggle "Show all N ingredients"
+  5. **Instructions**: `<Accordion type="single" collapsible>`, trigger "Instructions (N steps)", content is `<ol>` numbered list
+  6. `<Separator />`
+  7. **Action buttons**: Accept (primary, Check icon) + Reject (outline, X icon), stacked on mobile, side-by-side on sm+
+- After accept/reject: toast notification, returns to generate button state
+- "Generate Another" button appears below meal card
 
 ### Profile Page (Phase 7)
 - Page header: `text-2xl font-bold` title + `text-muted-foreground` subtitle, separated by `<Separator />`
