@@ -43,9 +43,8 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - `skeleton` - loading state placeholder (installed, available for future use)
 - `alert` - no-profile prompt with link to profile setup
 
-### Phase 9 Components (planned)
-- `pagination` - meal history pagination
-- `dropdown-menu` - sort/filter options
+### Phase 9 Components
+- No new installs needed — reuses existing `tabs`, `button`, `card`, `badge`, `separator`, `progress`, `accordion`
 
 ## Screen-Specific Notes
 
@@ -93,6 +92,16 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - **Save button**: `size="lg"`, full-width on mobile, right-aligned on sm+, saves all 3 endpoints in parallel via `Promise.all`
 - Validation: client-side mirrors server rules, inline `text-sm text-destructive` errors below fields
 - Toast: `toast.success` on save, `toast.error` on failure
+
+### History Page — Meal History (Phase 9)
+- Page header: `text-2xl font-bold` title + `text-sm text-muted-foreground` subtitle + `<Separator />`
+- Container: `max-w-2xl mx-auto`, same as Home Page
+- **Filter tabs**: shadcn `<Tabs>` with 3 triggers: All / Accepted / Rejected. Changing tab resets list and fetches from offset 0.
+- **Meal cards**: `<Card>` with clickable summary row (not entire card). Summary shows: title (truncated), `<Badge>` status (accepted=default, rejected=secondary, pending=outline), macro summary line (e.g. "520 kcal · 35g protein · 45g carbs · 22g fat"), metadata row (cuisine, cook time, date). Chevron icon rotates 180° on expand.
+- **Expanded view**: `<Separator>` + `MacroBarsSection` + description + `<Separator>` + `IngredientsSection` + `InstructionsSection`. No action buttons (meals already decided).
+- **Pagination**: "Load more" `<Button variant="outline">` centered below list, appends next page. 20 meals per page.
+- **Empty states**: Context-aware per filter tab — "No meals yet" / "No accepted meals" / "No rejected meals" with helper text.
+- **Loading**: Standard spinner (border-4 spin animation) centered with `py-20`.
 
 ## Color Palette Reference
 

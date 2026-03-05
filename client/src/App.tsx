@@ -5,6 +5,7 @@ import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import HomePage from '@/pages/HomePage'
 import ProfilePage from '@/pages/ProfilePage'
+import HistoryPage from '@/pages/HistoryPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -64,7 +65,7 @@ export default function App() {
       >
         <Route path="/" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/history" element={<div>History — coming in Phase 9</div>} />
+        <Route path="/history" element={<HistoryPage />} />
       </Route>
     </Routes>
   )

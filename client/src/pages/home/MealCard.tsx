@@ -10,9 +10,9 @@ import type { Meal, MacroTargets } from '@/types/meal'
 interface MealCardProps {
   meal: Meal
   targets: MacroTargets
-  onAccept: () => void
-  onReject: () => void
-  updating: boolean
+  onAccept?: () => void
+  onReject?: () => void
+  updating?: boolean
 }
 
 export default function MealCard({
@@ -49,12 +49,16 @@ export default function MealCard({
         <Separator />
         <IngredientsSection ingredients={meal.ingredients} />
         <InstructionsSection instructions={meal.instructions} />
-        <Separator />
-        <MealActionButtons
-          onAccept={onAccept}
-          onReject={onReject}
-          updating={updating}
-        />
+        {onAccept && onReject && (
+          <>
+            <Separator />
+            <MealActionButtons
+              onAccept={onAccept}
+              onReject={onReject}
+              updating={updating ?? false}
+            />
+          </>
+        )}
       </CardContent>
     </Card>
   )
