@@ -180,19 +180,41 @@ function validateMeal(meal: GeneratedMeal, maxCookTime: number | null): Validati
   return { valid: errors.length === 0, warnings, errors };
 }
 
+export class AIServiceError extends Error {
+  statusCode: number;
+
+  constructor(message: string, statusCode: number = 503) {
+    super(message);
+    this.name = 'AIServiceError';
+    this.statusCode = statusCode;
+  }
+}
+
 async function callClaudeAPI(userMessage: string): Promise<GeneratedMeal> {
-  const response = await getClient().messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    tools: [CREATE_MEAL_TOOL],
-    tool_choice: { type: 'tool', name: 'create_meal' },
-    messages: [{ role: 'user', content: userMessage }],
-  });
+  let response;
+  try {
+    response = await getClient().messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      tools: [CREATE_MEAL_TOOL],
+      tool_choice: { type: 'tool', name: 'create_meal' },
+      messages: [{ role: 'user', content: userMessage }],
+    });
+  } catch (err) {
+    if (err instanceof Anthropic.APIError) {
+      if (err.status === 429) {
+        throw new AIServiceError('AI service is temporarily busy. Please try again in a few minutes.', 503);
+      }
+      console.error('Anthropic API error:', err.status, err.message);
+      throw new AIServiceError('AI service is currently unavailable. Please try again later.', 503);
+    }
+    throw err;
+  }
 
   const toolUse = response.content.find((block) => block.type === 'tool_use');
   if (!toolUse || toolUse.type !== 'tool_use') {
-    throw new Error('AI did not return a tool_use response');
+    throw new AIServiceError('AI did not return a valid meal. Please try again.');
   }
 
   return toolUse.input as GeneratedMeal;

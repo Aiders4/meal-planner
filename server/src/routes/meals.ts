@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { requireAuth } from '../middleware/auth.js';
 import {
   createMeal,
@@ -10,9 +11,17 @@ import {
   getRecentAcceptedMealTitles,
 } from '../db/queries/meals.js';
 import { getProfile, getRestrictions, getDislikedIngredients } from '../db/queries/profiles.js';
-import { generateMeal } from '../services/ai.js';
+import { generateMeal, AIServiceError } from '../services/ai.js';
 
 const router = Router();
+
+const generateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { error: 'Too many meal generation requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 router.use(requireAuth);
 
@@ -38,7 +47,7 @@ const updateStatusSchema = z.object({
 });
 
 // POST /api/meals/generate
-router.post('/generate', async (req, res, next) => {
+router.post('/generate', generateLimiter, async (req, res, next) => {
   try {
     if (!process.env.ANTHROPIC_API_KEY) {
       res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' });
@@ -98,6 +107,14 @@ router.post('/generate', async (req, res, next) => {
       warnings,
     });
   } catch (err) {
+    if (err instanceof AIServiceError) {
+      res.status(err.statusCode).json({ error: err.message });
+      return;
+    }
+    if (err instanceof Error && err.message.includes('failed validation')) {
+      res.status(422).json({ error: 'Could not generate a valid meal. Please try again.' });
+      return;
+    }
     next(err);
   }
 });

@@ -63,16 +63,21 @@ Monorepo with npm workspaces:
 - `PATCH /api/meals/:id` — `{ status: 'accepted' | 'rejected' }` → `{ meal }`
 
 ## Progress
-- Phases 1–9 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page, meal generation UI, meal history)
+- Phases 1–10 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page, meal generation UI, meal history, polish & deploy)
 - `zod` already installed in server (used for profile and meals validation)
 - `@anthropic-ai/sdk` installed in server (AI service uses claude-haiku-4-5 with forced tool_use)
 - Client dependencies added in Phase 6: `react-router-dom`, `sonner` (toast notifications)
 - shadcn/ui components installed: button, input, label, card, sonner, checkbox, slider, badge, separator, tabs, progress, accordion, skeleton, alert
-- Next up: Phase 10 (Polish and Deploy)
 
-## Future / Production Hardening
-- Rate limiting on `POST /api/meals/generate` — each call costs money (Anthropic API); add before any public deployment
-- CORS lockdown, HTTPS, other production security measures
+## Deployment
+- **Server runtime**: `tsx` (in production dependencies) — avoids ESM/CJS issues with `__dirname` in `connection.ts`
+- **Frontend**: Vercel with `client/vercel.json` for SPA rewrites
+- **Backend**: Render with persistent disk at `/data` for SQLite
+- **Environment variables**:
+  - `CORS_ORIGIN` — set to frontend URL in production (server)
+  - `VITE_API_URL` — set to backend URL in production (client)
+- **Rate limiting**: `POST /api/meals/generate` — 10 requests per 15 min per IP
+- **Error handling**: `AIServiceError` class in `ai.ts` for user-friendly Anthropic API error messages; error middleware logs full stack traces
 
 ## Conventions
 - Keep commits small and focused — one per meaningful change

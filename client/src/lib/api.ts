@@ -1,3 +1,4 @@
+const API_BASE = import.meta.env.VITE_API_URL || ''
 const TOKEN_KEY = 'meal-planner-token'
 
 export class ApiError extends Error {
@@ -39,7 +40,7 @@ export async function api<T>(endpoint: string, options: ApiOptions = {}): Promis
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const res = await fetch(endpoint, { ...fetchOptions, headers })
+  const res = await fetch(`${API_BASE}${endpoint}`, { ...fetchOptions, headers })
 
   if (res.status === 401) {
     clearStoredToken()

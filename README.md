@@ -56,8 +56,7 @@ meal-planner/
 
 2. Install dependencies:
    ```bash
-   cd client && npm install
-   cd ../server && npm install
+   npm install
    ```
 
 3. Configure environment variables:
@@ -74,10 +73,9 @@ meal-planner/
 
 4. Start the development servers:
    ```bash
-   # From the root directory
    npm run dev
    ```
-   This starts both the client (Vite) and server (Express) concurrently.
+   This starts both the client (port 5173) and server (port 3001) concurrently. The Vite dev server proxies `/api` requests to the backend.
 
 ## Features
 
@@ -91,5 +89,44 @@ meal-planner/
 
 ## Deployment
 
-- **Frontend**: Vercel (static build from `client/`)
-- **Backend**: Render (Node.js with persistent disk for SQLite)
+### Backend — Render
+
+1. Create a new **Web Service** on [Render](https://render.com)
+2. Connect your repository
+3. Configure:
+   - **Root Directory**: `server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Runtime**: Node
+4. Add a **Persistent Disk**:
+   - **Mount Path**: `/data`
+5. Set **Environment Variables**:
+   | Variable | Value |
+   |----------|-------|
+   | `PORT` | `3001` (or let Render assign) |
+   | `JWT_SECRET` | A random 64-character string |
+   | `DATABASE_PATH` | `/data/meal-planner.db` |
+   | `ANTHROPIC_API_KEY` | Your Anthropic API key |
+   | `CORS_ORIGIN` | Your Vercel frontend URL (e.g. `https://your-app.vercel.app`) |
+
+### Frontend — Vercel
+
+1. Create a new project on [Vercel](https://vercel.com)
+2. Connect your repository
+3. Configure:
+   - **Root Directory**: `client`
+   - **Framework Preset**: Vite
+4. Set **Environment Variables**:
+   | Variable | Value |
+   |----------|-------|
+   | `VITE_API_URL` | Your Render backend URL (e.g. `https://your-api.onrender.com`) |
+
+### Post-Deployment Checklist
+
+- [ ] Register a new account
+- [ ] Set up profile with macro targets and restrictions
+- [ ] Generate a meal — verify AI response with ingredients and macros
+- [ ] Accept the meal
+- [ ] Check meal history — verify the accepted meal appears
+- [ ] Test dark mode toggle
+- [ ] Verify rate limiting works (10 generations per 15 min)

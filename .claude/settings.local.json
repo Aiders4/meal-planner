@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(git push:*)",
+      "Bash(npx tsx:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(node -e:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(cd /c/Users/adria/meal-planner && npx -w server tsc --noEmit 2>&1)"
     ]
   }
 }
