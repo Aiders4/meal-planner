@@ -38,9 +38,16 @@ const restrictionSchema = z.object({
     z.object({
       category: z.enum(['lifestyle', 'allergy', 'religious', 'medical']),
       value: z.string().min(1),
-    }).refine(
-      (r) => allowedRestrictions[r.category]?.includes(r.value),
-      (r) => ({ message: `Invalid value "${r.value}" for category "${r.category}"` })
+    }).check(
+      (ctx) => {
+        if (!allowedRestrictions[ctx.value.category]?.includes(ctx.value.value)) {
+          ctx.issues.push({
+            code: 'custom',
+            message: `Invalid value "${ctx.value.value}" for category "${ctx.value.category}"`,
+            input: ctx.value,
+          });
+        }
+      }
     )
   ),
 });
