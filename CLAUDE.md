@@ -23,7 +23,7 @@ Monorepo with npm workspaces:
 - **npm** as package manager (not pnpm or yarn)
 
 ## Design
-- **Style guide**: `design/decisions.md` is the persistent style guide for all UI work (Phases 6–9). Consult it before building any frontend component. When a design decision is made or changed (layout, spacing, color, component choice, screen-specific convention), update `decisions.md` to reflect it.
+- **Style guide**: `design/decisions.md` is the persistent style guide for all UI work. Consult it before building any frontend component. When a design decision is made or changed (layout, spacing, color, component choice, screen-specific convention), update `decisions.md` to reflect it.
 - **Wireframes**: `design/wireframes.md` has ASCII wireframes for reference
 - **Prototype**: `design/prototype.html` is a standalone visual mockup (open in browser)
 
@@ -38,10 +38,12 @@ Monorepo with npm workspaces:
 - `src/lib/constants.ts` — `ALLOWED_RESTRICTIONS`, `ALLOWED_CUISINES`, cook time bounds (mirrors server)
 - `src/types/profile.ts` — `ProfileResponse`, `ProfileFormState` interfaces
 - `src/types/meal.ts` — `Ingredient`, `Meal`, `GenerateResponse`, `MacroTargets` interfaces
-- `src/pages/` — LoginPage, RegisterPage, HomePage, ProfilePage
+- `src/pages/` — LoginPage, RegisterPage, HomePage, ProfilePage, HistoryPage
 - `src/pages/profile/` — MacroTargetsSection, DietaryRestrictionsSection, CuisinePreferencesSection, DislikedIngredientsSection, CookTimeSection
 - `src/pages/home/` — NoProfileAlert, GenerateButton, MacroBarsSection, IngredientsSection, InstructionsSection, MealActionButtons, MealCard
-- Routes: `/login`, `/register`, `/` (home), `/profile`, `/history` (placeholder)
+- `src/pages/history/` — HistoryFilters, HistoryMealCard, EmptyState, LoadMoreButton
+- Routes: `/login`, `/register`, `/` (home), `/profile`, `/history`
+- MealCard `onAccept`/`onReject`/`updating` props are optional — omit to hide action buttons (used by HistoryMealCard's expanded view reuses sub-components directly)
 - `erasableSyntaxOnly` is enabled in client tsconfig — use explicit property declaration + constructor assignment, not `public` parameter properties
 
 ## Server
@@ -61,23 +63,12 @@ Monorepo with npm workspaces:
 - `PATCH /api/meals/:id` — `{ status: 'accepted' | 'rejected' }` → `{ meal }`
 
 ## Progress
-- Phases 1–8 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page, meal generation UI)
+- Phases 1–9 complete (scaffolding, database, auth, profile API, AI meal generation, frontend layout & auth, profile page, meal generation UI, meal history)
 - `zod` already installed in server (used for profile and meals validation)
 - `@anthropic-ai/sdk` installed in server (AI service uses claude-haiku-4-5 with forced tool_use)
 - Client dependencies added in Phase 6: `react-router-dom`, `sonner` (toast notifications)
 - shadcn/ui components installed: button, input, label, card, sonner, checkbox, slider, badge, separator, tabs, progress, accordion, skeleton, alert
-- Next up: Phase 9 (Meal History) — see spec below
-
-## Phase 9 Spec: Meal History
-Build a `/history` page (replace current placeholder) showing past generated meals:
-1. **Filter tabs**: All / Accepted / Rejected (use existing `tabs` component or simple button group)
-2. **Compact meal cards**: title, macros summary, date, status badge — click to expand full details
-3. **Pagination**: 20 meals per page, "Load more" button or page navigation
-4. **Empty state**: message if no meals exist yet
-- Server endpoint ready: `GET /api/meals?status=...&limit=20&offset=0` → `{ meals, total }`
-- Reuse: `Meal` type from `src/types/meal.ts`, `api()` from `src/lib/api.ts`, existing meal card sub-components from `src/pages/home/`
-- shadcn components to install: `pagination`, `dropdown-menu` (for sort/filter if needed)
-- Follow orchestrator pattern: HistoryPage manages state, child components are pure display
+- Next up: Phase 10 (Polish and Deploy)
 
 ## Future / Production Hardening
 - Rate limiting on `POST /api/meals/generate` — each call costs money (Anthropic API); add before any public deployment
