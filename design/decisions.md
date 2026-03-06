@@ -52,6 +52,7 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 - Card: `max-w-sm` centered both axes
 - App title "Meal Planner" as `<h1>` inside card
 - Subtitle: "Welcome back" (login) / "Create your account" (register)
+- Register form includes "Invite Code" field above email (required when server has `INVITE_CODE` set)
 - Form fields stacked vertically with `gap-4`
 - Full-width primary button for submit
 - Link text below button to switch between login/register

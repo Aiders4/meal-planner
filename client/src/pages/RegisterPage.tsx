@@ -11,14 +11,18 @@ import { ApiError } from '@/lib/api'
 export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
+  const [inviteCode, setInviteCode] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({})
+  const [errors, setErrors] = useState<{ inviteCode?: string; email?: string; password?: string; confirmPassword?: string }>({})
   const [submitting, setSubmitting] = useState(false)
 
   function validate(): boolean {
     const next: typeof errors = {}
+    if (!inviteCode.trim()) {
+      next.inviteCode = 'Invite code is required'
+    }
     if (!email.trim()) {
       next.email = 'Email is required'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -42,7 +46,7 @@ export default function RegisterPage() {
 
     setSubmitting(true)
     try {
-      await register(email, password)
+      await register(email, password, inviteCode)
       navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {
@@ -64,6 +68,19 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="inviteCode">Invite Code</Label>
+              <Input
+                id="inviteCode"
+                type="text"
+                placeholder="Enter your invite code"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+              />
+              {errors.inviteCode && (
+                <p className="text-sm text-destructive">{errors.inviteCode}</p>
+              )}
+            </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
               <Input

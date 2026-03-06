@@ -49,11 +49,12 @@ Monorepo with npm workspaces:
 | `JWT_SECRET` | server | JWT signing key |
 | `DATABASE_PATH` | server | SQLite file path (default `./data/meal-planner.db`) |
 | `ANTHROPIC_API_KEY` | server | Claude API key |
+| `INVITE_CODE` | server | Registration invite code (unset = open registration) |
 | `CORS_ORIGIN` | server | Frontend URL for CORS in production |
 | `VITE_API_URL` | client | Backend URL in production |
 
 ### API Routes
-- `POST /api/auth/register` — `{ email, password }` → `{ token, user }`
+- `POST /api/auth/register` — `{ email, password, invite_code }` → `{ token, user }` (403 if code wrong/missing when `INVITE_CODE` is set)
 - `POST /api/auth/login` — `{ email, password }` → `{ token, user }`
 - `GET /api/profile` — returns `{ profile, dietary_restrictions, disliked_ingredients }`
 - `PUT /api/profile` — upsert macro targets + cook time + cuisine prefs
@@ -66,13 +67,20 @@ Monorepo with npm workspaces:
 ## Key Patterns
 - **Orchestrator pages**: ProfilePage, HomePage, HistoryPage each own all state; child components are pure display
 - **Error handling**: `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
-- **Rate limiting**: `POST /api/meals/generate` — 10 requests per 15 min per IP
+- **Rate limiting**: `POST /api/meals/generate` — 10 requests per 15 min per IP + 10 per user per day (UTC)
+- **Security headers**: `helmet` middleware on all routes
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
 
 ## Deployment
 - **Frontend**: Vercel with `client/vercel.json` for SPA rewrites
 - **Backend**: Render with persistent disk at `/data` for SQLite
 - **Server runtime**: `tsx` in production deps — avoids ESM/CJS `__dirname` issues
+
+### Pre-Deployment Checklist
+1. Set `INVITE_CODE` env var on Render to a secret value — blocks random signups
+2. Set `CORS_ORIGIN` env var on Render to the Vercel frontend URL
+3. Set `JWT_SECRET` to a random 64+ character string
+4. Verify `ANTHROPIC_API_KEY` is set and Anthropic spending cap is in place
 
 ## Conventions
 - Keep commits small and focused — one per meaningful change

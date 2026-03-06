@@ -123,6 +123,14 @@ export function countMealsByUser(userId: number, filters?: { status?: string }):
   return row.count;
 }
 
+export function countMealsByUserToday(userId: number): number {
+  const stmt = db.prepare(
+    `SELECT COUNT(*) as count FROM meals WHERE user_id = ? AND date(created_at) = date('now')`
+  );
+  const row = stmt.get(userId) as { count: number };
+  return row.count;
+}
+
 export function getRecentAcceptedMealTitles(userId: number, limit: number = 10): string[] {
   const stmt = db.prepare(
     `SELECT title FROM meals WHERE user_id = ? AND status = 'accepted' ORDER BY created_at DESC LIMIT ?`

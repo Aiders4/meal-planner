@@ -12,7 +12,7 @@ interface AuthContextType {
   token: string | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, inviteCode: string) => Promise<void>
   logout: () => void
 }
 
@@ -52,10 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }, [])
 
-  const register = useCallback(async (email: string, password: string) => {
+  const register = useCallback(async (email: string, password: string, inviteCode: string) => {
     const data = await api<{ token: string; user: User }>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, invite_code: inviteCode }),
       suppressAuthRedirect: true,
     })
     setStoredToken(data.token)

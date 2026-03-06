@@ -7,6 +7,7 @@ import {
   getMealById,
   getMealsByUser,
   countMealsByUser,
+  countMealsByUserToday,
   updateMealStatus,
   getRecentAcceptedMealTitles,
 } from '../db/queries/meals.js';
@@ -65,6 +66,13 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
     }
 
     const userId = req.user!.userId;
+
+    const dailyCount = countMealsByUserToday(userId);
+    if (dailyCount >= 10) {
+      res.status(429).json({ error: 'Daily meal generation limit reached (10/day). Resets at midnight UTC.' });
+      return;
+    }
+
     const profile = getProfile(userId);
     if (!profile) {
       res.status(400).json({ error: 'Profile must be configured before generating meals' });

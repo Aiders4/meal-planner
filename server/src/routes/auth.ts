@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { timingSafeEqual } from 'crypto';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
 import { createUser, findUserByEmail, findUserById } from '../db/queries/users.js';
@@ -21,7 +22,19 @@ function isValidEmail(email: string): boolean {
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, invite_code } = req.body;
+
+    const expectedCode = process.env.INVITE_CODE;
+    if (expectedCode) {
+      const given = String(invite_code ?? '');
+      const codeMatch =
+        given.length === expectedCode.length &&
+        timingSafeEqual(Buffer.from(given), Buffer.from(expectedCode));
+      if (!codeMatch) {
+        res.status(403).json({ error: 'Invalid or missing invite code' });
+        return;
+      }
+    }
 
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required' });

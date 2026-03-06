@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -13,6 +14,12 @@ import { errorHandler } from './middleware/error.js';
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
+
+if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+  console.warn('WARNING: CORS_ORIGIN is not set in production — CORS will allow all origins');
+}
+
+app.use(helmet());
 
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || '*',
