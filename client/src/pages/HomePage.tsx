@@ -1,15 +1,35 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api, ApiError } from '@/lib/api'
+import { validateMacroInputs } from '@/lib/validation'
 import type { ProfileResponse } from '@/types/profile'
 import type { Meal, MacroTargets, GenerateResponse } from '@/types/meal'
 import NoProfileAlert from './home/NoProfileAlert'
 import GenerateButton from './home/GenerateButton'
 import MealCard from './home/MealCard'
+import MacroTargetsSection from './profile/MacroTargetsSection'
+
+function parseOptionalInt(value: string): number | null {
+  if (value.trim() === '') return null
+  return parseInt(value, 10)
+}
 
 export default function HomePage() {
   const [hasProfile, setHasProfile] = useState<boolean | null>(null)
-  const [targets, setTargets] = useState<MacroTargets>({
+  const [macroInputs, setMacroInputs] = useState({
+    calorie_target: '',
+    protein_target: '',
+    carb_target: '',
+    fat_target: '',
+  })
+  const [profileDefaults, setProfileDefaults] = useState<MacroTargets>({
+    calorie_target: null,
+    protein_target: null,
+    carb_target: null,
+    fat_target: null,
+  })
+  const [macroErrors, setMacroErrors] = useState<Record<string, string>>({})
+  const [usedTargets, setUsedTargets] = useState<MacroTargets>({
     calorie_target: null,
     protein_target: null,
     carb_target: null,
@@ -22,13 +42,20 @@ export default function HomePage() {
   useEffect(() => {
     api<ProfileResponse>('/api/profile')
       .then((data) => {
-        if (data.profile && data.profile.calorie_target !== null) {
+        if (data.profile !== null) {
           setHasProfile(true)
-          setTargets({
+          const defaults: MacroTargets = {
             calorie_target: data.profile.calorie_target,
             protein_target: data.profile.protein_target,
             carb_target: data.profile.carb_target,
             fat_target: data.profile.fat_target,
+          }
+          setProfileDefaults(defaults)
+          setMacroInputs({
+            calorie_target: defaults.calorie_target != null ? String(defaults.calorie_target) : '',
+            protein_target: defaults.protein_target != null ? String(defaults.protein_target) : '',
+            carb_target: defaults.carb_target != null ? String(defaults.carb_target) : '',
+            fat_target: defaults.fat_target != null ? String(defaults.fat_target) : '',
           })
         } else {
           setHasProfile(false)
@@ -39,13 +66,51 @@ export default function HomePage() {
       })
   }, [])
 
+  function updateMacroField(field: string, value: string) {
+    setMacroInputs((prev) => ({ ...prev, [field]: value }))
+    setMacroErrors((prev) => {
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
+  function resetToDefaults() {
+    setMacroInputs({
+      calorie_target: profileDefaults.calorie_target != null ? String(profileDefaults.calorie_target) : '',
+      protein_target: profileDefaults.protein_target != null ? String(profileDefaults.protein_target) : '',
+      carb_target: profileDefaults.carb_target != null ? String(profileDefaults.carb_target) : '',
+      fat_target: profileDefaults.fat_target != null ? String(profileDefaults.fat_target) : '',
+    })
+    setMacroErrors({})
+  }
+
   async function handleGenerate() {
+    const errors = validateMacroInputs(macroInputs)
+    if (Object.keys(errors).length > 0) {
+      setMacroErrors(errors)
+      return
+    }
+
+    const targets: MacroTargets = {
+      calorie_target: parseOptionalInt(macroInputs.calorie_target),
+      protein_target: parseOptionalInt(macroInputs.protein_target),
+      carb_target: parseOptionalInt(macroInputs.carb_target),
+      fat_target: parseOptionalInt(macroInputs.fat_target),
+    }
+    setUsedTargets(targets)
+
     setGenerating(true)
     setMeal(null)
     try {
       const data = await api<GenerateResponse>('/api/meals/generate', {
         method: 'POST',
-        body: '{}',
+        body: JSON.stringify({
+          calorie_target: targets.calorie_target,
+          protein_target: targets.protein_target,
+          carb_target: targets.carb_target,
+          fat_target: targets.fat_target,
+        }),
       })
       setMeal(data.meal)
       if (data.warnings.length > 0) {
@@ -105,7 +170,7 @@ export default function HomePage() {
         <>
           <MealCard
             meal={meal}
-            targets={targets}
+            targets={usedTargets}
             onAccept={() => handleStatusUpdate('accepted')}
             onReject={() => handleStatusUpdate('rejected')}
             updating={updating}
@@ -115,11 +180,28 @@ export default function HomePage() {
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center gap-4 py-12 text-center">
-          <h2 className="text-2xl font-bold">Ready to Generate Meals</h2>
-          <p className="text-muted-foreground">
-            Generate a meal based on your dietary preferences and macro targets.
-          </p>
+        <div className="flex flex-col items-center gap-6 py-12 text-center">
+          <div>
+            <h2 className="text-2xl font-bold">Generate a Meal</h2>
+            <p className="text-muted-foreground">
+              Adjust targets for this meal, then generate.
+            </p>
+          </div>
+          <div className="w-full max-w-md text-left">
+            <MacroTargetsSection
+              values={macroInputs}
+              onChange={updateMacroField}
+              errors={macroErrors}
+              compact
+            />
+            <button
+              type="button"
+              className="mt-2 text-sm text-muted-foreground underline hover:text-foreground"
+              onClick={resetToDefaults}
+            >
+              Reset to defaults
+            </button>
+          </div>
           <GenerateButton generating={generating} onGenerate={handleGenerate} />
         </div>
       )}

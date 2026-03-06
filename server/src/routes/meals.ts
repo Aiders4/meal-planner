@@ -28,6 +28,10 @@ router.use(requireAuth);
 // --- Validation schemas ---
 
 const generateSchema = z.object({
+  calorie_target: z.number().int().min(1).max(10000).nullable().optional(),
+  protein_target: z.number().int().min(0).max(1000).nullable().optional(),
+  carb_target: z.number().int().min(0).max(1000).nullable().optional(),
+  fat_target: z.number().int().min(0).max(1000).nullable().optional(),
   preferences_override: z
     .object({
       cuisine: z.string().min(1).optional(),
@@ -72,11 +76,16 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
     const recentTitles = getRecentAcceptedMealTitles(userId, 10);
     const cuisinePrefs: string[] = JSON.parse(profile.cuisine_preferences || '[]');
 
+    const effectiveCalorie = parsed.data.calorie_target !== undefined ? parsed.data.calorie_target : profile.calorie_target;
+    const effectiveProtein = parsed.data.protein_target !== undefined ? parsed.data.protein_target : profile.protein_target;
+    const effectiveCarb = parsed.data.carb_target !== undefined ? parsed.data.carb_target : profile.carb_target;
+    const effectiveFat = parsed.data.fat_target !== undefined ? parsed.data.fat_target : profile.fat_target;
+
     const { meal, warnings } = await generateMeal({
-      calorie_target: profile.calorie_target,
-      protein_target: profile.protein_target,
-      carb_target: profile.carb_target,
-      fat_target: profile.fat_target,
+      calorie_target: effectiveCalorie,
+      protein_target: effectiveProtein,
+      carb_target: effectiveCarb,
+      fat_target: effectiveFat,
       cuisine_preferences: cuisinePrefs,
       max_cook_time_minutes: profile.max_cook_time_minutes,
       restrictions: restrictions.map((r) => ({ category: r.category, value: r.value })),

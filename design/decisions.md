@@ -68,7 +68,7 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 
 ### Home Page — Meal Generation (Phase 8)
 - No profile: `<Alert>` with "Profile Required" title and link to `/profile`, `max-w-lg` centered
-- With profile, no meal: Centered heading + description + "Generate Meal" button
+- With profile, no meal: Centered heading + description + compact inline macro target inputs (pre-filled from profile defaults) + "Reset to defaults" link + "Generate Meal" button. Macro inputs allow per-meal overrides before generating.
 - Generating: Button shows inline spinner + "Creating your meal..."
 - Meal displayed: `<Card>` with `max-w-2xl` containing:
   1. **CardHeader**: title, description, cuisine + cook time `<Badge variant="secondary">`
@@ -84,7 +84,7 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 ### Profile Page (Phase 7)
 - Page header: `text-2xl font-bold` title + `text-muted-foreground` subtitle, separated by `<Separator />`
 - Sections stacked vertically with `gap-6`, each inside a `<Card>`
-- **Macro Targets**: 2×2 grid (`grid-cols-1 sm:grid-cols-2`), number inputs with `inputMode="numeric"`, all optional (empty = null)
+- **Macro Targets**: 2×2 grid (`grid-cols-1 sm:grid-cols-2`), number inputs with `inputMode="numeric"`, all optional (empty = null). Labeled as "default per-meal targets". Component supports `compact` mode (no Card wrapper) for reuse on Home page.
 - **Dietary Restrictions**: `<Tabs>` with 4 categories, checkboxes in 2-col grid, composite key format `"category:value"`
 - **Cuisine Preferences**: Clickable `<Badge>` toggles — `variant="default"` when selected, `variant="outline"` when not
 - **Disliked Ingredients**: Text input + Add button, removable `<Badge variant="secondary">` with X icon, validates non-empty/≤100 chars/no duplicates

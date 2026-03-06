@@ -24,8 +24,6 @@ Monorepo with npm workspaces:
 
 ## Design
 - `design/decisions.md` — persistent style guide; consult before UI work, update when decisions change
-- `design/wireframes.md` — ASCII wireframes
-- `design/prototype.html` — standalone visual mockup
 
 ## Client
 - Vite proxies `/api` → `http://localhost:3001`
@@ -61,7 +59,7 @@ Monorepo with npm workspaces:
 - `PUT /api/profile` — upsert macro targets + cook time + cuisine prefs
 - `PUT /api/profile/restrictions` — replace all dietary restrictions
 - `PUT /api/profile/disliked-ingredients` — replace all disliked ingredients
-- `POST /api/meals/generate` — calls Claude API, returns `{ meal, warnings }`
+- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target? }` optional per-meal overrides; falls back to profile defaults. Returns `{ meal, warnings }`
 - `GET /api/meals?status=accepted&limit=20&offset=0` — paginated meal history with parsed `ingredients`/`instructions` arrays
 - `PATCH /api/meals/:id` — `{ status: 'accepted' | 'rejected' }` → `{ meal }`
 

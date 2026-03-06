@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { api, ApiError } from '@/lib/api'
+import { validateMacroInputs } from '@/lib/validation'
 import { COOK_TIME_DEFAULT } from '@/lib/constants'
 import type { ProfileResponse, ProfileFormState } from '@/types/profile'
 import MacroTargetsSection from './profile/MacroTargetsSection'
@@ -106,26 +107,7 @@ export default function ProfilePage() {
   }
 
   function validate(): boolean {
-    const next: Record<string, string> = {}
-
-    const cal = form.calorie_target.trim()
-    if (cal !== '') {
-      const n = Number(cal)
-      if (!Number.isInteger(n) || n < 1 || n > 10000) {
-        next.calorie_target = 'Must be between 1 and 10,000'
-      }
-    }
-
-    for (const key of ['protein_target', 'carb_target', 'fat_target'] as const) {
-      const v = form[key].trim()
-      if (v !== '') {
-        const n = Number(v)
-        if (!Number.isInteger(n) || n < 0 || n > 1000) {
-          next[key] = 'Must be between 0 and 1,000'
-        }
-      }
-    }
-
+    const next = validateMacroInputs(form)
     setErrors(next)
     return Object.keys(next).length === 0
   }

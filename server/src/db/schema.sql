@@ -8,10 +8,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS profiles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL UNIQUE,
-  calorie_target INTEGER,
-  protein_target INTEGER,
-  carb_target INTEGER,
-  fat_target INTEGER,
+  calorie_target INTEGER, -- Per-meal default
+  protein_target INTEGER, -- Per-meal default
+  carb_target INTEGER, -- Per-meal default
+  fat_target INTEGER, -- Per-meal default
   cuisine_preferences TEXT DEFAULT '[]',
   max_cook_time_minutes INTEGER,
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
