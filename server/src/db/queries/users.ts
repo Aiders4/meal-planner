@@ -1,4 +1,4 @@
-import db from '../connection.js';
+import client from '../connection.js';
 
 export interface User {
   id: number;
@@ -7,20 +7,27 @@ export interface User {
   created_at: string;
 }
 
-export function createUser(email: string, passwordHash: string): User {
-  const stmt = db.prepare(
-    'INSERT INTO users (email, password_hash) VALUES (?, ?)'
-  );
-  const result = stmt.run(email, passwordHash);
-  return findUserById(result.lastInsertRowid as number)!;
+export async function createUser(email: string, passwordHash: string): Promise<User> {
+  const result = await client.execute({
+    sql: 'INSERT INTO users (email, password_hash) VALUES (?, ?)',
+    args: [email, passwordHash],
+  });
+  const user = await findUserById(Number(result.lastInsertRowid));
+  return user!;
 }
 
-export function findUserByEmail(email: string): User | undefined {
-  const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-  return stmt.get(email) as User | undefined;
+export async function findUserByEmail(email: string): Promise<User | undefined> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM users WHERE email = ?',
+    args: [email],
+  });
+  return result.rows[0] as unknown as User | undefined;
 }
 
-export function findUserById(id: number): User | undefined {
-  const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-  return stmt.get(id) as User | undefined;
+export async function findUserById(id: number): Promise<User | undefined> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM users WHERE id = ?',
+    args: [id],
+  });
+  return result.rows[0] as unknown as User | undefined;
 }

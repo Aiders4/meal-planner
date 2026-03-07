@@ -1,4 +1,4 @@
-import db from '../connection.js';
+import client from '../connection.js';
 
 export interface Meal {
   id: number;
@@ -37,35 +37,39 @@ export interface MealFilters {
   offset?: number;
 }
 
-export function createMeal(userId: number, data: MealData): Meal {
-  const stmt = db.prepare(`
-    INSERT INTO meals (user_id, title, description, ingredients, instructions, calories, protein_g, carbs_g, fat_g, cook_time_minutes, cuisine)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+export async function createMeal(userId: number, data: MealData): Promise<Meal> {
+  const result = await client.execute({
+    sql: `
+      INSERT INTO meals (user_id, title, description, ingredients, instructions, calories, protein_g, carbs_g, fat_g, cook_time_minutes, cuisine)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    args: [
+      userId,
+      data.title,
+      data.description ?? null,
+      JSON.stringify(data.ingredients),
+      JSON.stringify(data.instructions),
+      data.calories ?? null,
+      data.protein_g ?? null,
+      data.carbs_g ?? null,
+      data.fat_g ?? null,
+      data.cook_time_minutes ?? null,
+      data.cuisine ?? null,
+    ],
+  });
 
-  const result = stmt.run(
-    userId,
-    data.title,
-    data.description ?? null,
-    JSON.stringify(data.ingredients),
-    JSON.stringify(data.instructions),
-    data.calories ?? null,
-    data.protein_g ?? null,
-    data.carbs_g ?? null,
-    data.fat_g ?? null,
-    data.cook_time_minutes ?? null,
-    data.cuisine ?? null
-  );
-
-  return getMealById(result.lastInsertRowid as number)!;
+  return (await getMealById(Number(result.lastInsertRowid)))!;
 }
 
-export function getMealById(id: number): Meal | undefined {
-  const stmt = db.prepare('SELECT * FROM meals WHERE id = ?');
-  return stmt.get(id) as Meal | undefined;
+export async function getMealById(id: number): Promise<Meal | undefined> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM meals WHERE id = ?',
+    args: [id],
+  });
+  return result.rows[0] as unknown as Meal | undefined;
 }
 
-export function getMealsByUser(userId: number, filters: MealFilters = {}): Meal[] {
+export async function getMealsByUser(userId: number, filters: MealFilters = {}): Promise<Meal[]> {
   const conditions = ['user_id = ?'];
   const params: (string | number)[] = [userId];
 
@@ -91,23 +95,23 @@ export function getMealsByUser(userId: number, filters: MealFilters = {}): Meal[
 
   params.push(limit, offset);
 
-  const stmt = db.prepare(sql);
-  return stmt.all(...params) as Meal[];
+  const result = await client.execute({ sql, args: params });
+  return result.rows as unknown as Meal[];
 }
 
-export function updateMealStatus(
+export async function updateMealStatus(
   mealId: number,
   userId: number,
   status: string
-): boolean {
-  const stmt = db.prepare(
-    'UPDATE meals SET status = ? WHERE id = ? AND user_id = ?'
-  );
-  const result = stmt.run(status, mealId, userId);
-  return result.changes > 0;
+): Promise<boolean> {
+  const result = await client.execute({
+    sql: 'UPDATE meals SET status = ? WHERE id = ? AND user_id = ?',
+    args: [status, mealId, userId],
+  });
+  return (result.rowsAffected ?? 0) > 0;
 }
 
-export function countMealsByUser(userId: number, filters?: { status?: string }): number {
+export async function countMealsByUser(userId: number, filters?: { status?: string }): Promise<number> {
   const conditions = ['user_id = ?'];
   const params: (string | number)[] = [userId];
 
@@ -116,25 +120,27 @@ export function countMealsByUser(userId: number, filters?: { status?: string }):
     params.push(filters.status);
   }
 
-  const stmt = db.prepare(
-    `SELECT COUNT(*) as count FROM meals WHERE ${conditions.join(' AND ')}`
-  );
-  const row = stmt.get(...params) as { count: number };
+  const result = await client.execute({
+    sql: `SELECT COUNT(*) as count FROM meals WHERE ${conditions.join(' AND ')}`,
+    args: params,
+  });
+  const row = result.rows[0] as unknown as { count: number };
   return row.count;
 }
 
-export function countMealsByUserToday(userId: number): number {
-  const stmt = db.prepare(
-    `SELECT COUNT(*) as count FROM meals WHERE user_id = ? AND date(created_at) = date('now')`
-  );
-  const row = stmt.get(userId) as { count: number };
+export async function countMealsByUserToday(userId: number): Promise<number> {
+  const result = await client.execute({
+    sql: `SELECT COUNT(*) as count FROM meals WHERE user_id = ? AND date(created_at) = date('now')`,
+    args: [userId],
+  });
+  const row = result.rows[0] as unknown as { count: number };
   return row.count;
 }
 
-export function getRecentAcceptedMealTitles(userId: number, limit: number = 10): string[] {
-  const stmt = db.prepare(
-    `SELECT title FROM meals WHERE user_id = ? AND status = 'accepted' ORDER BY created_at DESC LIMIT ?`
-  );
-  const rows = stmt.all(userId, limit) as { title: string }[];
-  return rows.map(r => r.title);
+export async function getRecentAcceptedMealTitles(userId: number, limit: number = 10): Promise<string[]> {
+  const result = await client.execute({
+    sql: `SELECT title FROM meals WHERE user_id = ? AND status = 'accepted' ORDER BY created_at DESC LIMIT ?`,
+    args: [userId, limit],
+  });
+  return (result.rows as unknown as { title: string }[]).map(r => r.title);
 }

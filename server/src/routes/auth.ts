@@ -51,14 +51,14 @@ router.post('/register', authLimiter, async (req, res, next) => {
       return;
     }
 
-    const existing = findUserByEmail(email);
+    const existing = await findUserByEmail(email);
     if (existing) {
       res.status(409).json({ error: 'Email already registered' });
       return;
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = createUser(email, passwordHash);
+    const user = await createUser(email, passwordHash);
     const token = generateToken({ userId: user.id, email: user.email });
 
     res.status(201).json({
@@ -80,7 +80,7 @@ router.post('/login', authLimiter, async (req, res, next) => {
       return;
     }
 
-    const user = findUserByEmail(email);
+    const user = await findUserByEmail(email);
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
@@ -104,9 +104,9 @@ router.post('/login', authLimiter, async (req, res, next) => {
 });
 
 // GET /api/auth/me
-router.get('/me', requireAuth, (req, res, next) => {
+router.get('/me', requireAuth, async (req, res, next) => {
   try {
-    const user = findUserById(req.user!.userId);
+    const user = await findUserById(req.user!.userId);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;

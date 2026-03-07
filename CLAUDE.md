@@ -16,7 +16,7 @@ Monorepo with npm workspaces:
 ## Tech Stack (do not deviate)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin, CSS-based config (no tailwind.config)
 - **shadcn/ui** — `@/*` path alias → `./src/*`, components in `src/components/ui/`
-- **SQLite** via `better-sqlite3` with raw SQL (no ORM)
+- **SQLite** via `@libsql/client` with raw SQL (no ORM) — Turso in production, local file in development
 - **tsx watch** for server dev (not ts-node or nodemon)
 - **npm** as package manager (not pnpm or yarn)
 - **zod** for server-side validation
@@ -47,8 +47,10 @@ Monorepo with npm workspaces:
 |----------|-------|---------|
 | `PORT` | server | Server port (default 3001) |
 | `JWT_SECRET` | server | JWT signing key |
-| `DATABASE_PATH` | server | SQLite file path (default `./data/meal-planner.db`) |
+| `DATABASE_PATH` | server | SQLite file path for local dev (default `./data/meal-planner.db`) |
 | `ANTHROPIC_API_KEY` | server | Claude API key |
+| `TURSO_DATABASE_URL` | server | Turso database URL (production only) |
+| `TURSO_AUTH_TOKEN` | server | Turso auth token (production only) |
 | `INVITE_CODE` | server | Registration invite code (unset = open registration) |
 | `CORS_ORIGIN` | server | Frontend URL for CORS in production |
 | `VITE_API_URL` | client | Backend URL in production |
@@ -73,14 +75,15 @@ Monorepo with npm workspaces:
 
 ## Deployment
 - **Frontend**: Vercel with `client/vercel.json` for SPA rewrites
-- **Backend**: Render with persistent disk at `/data` for SQLite
+- **Backend**: Render (free tier) with Turso for SQLite database
 - **Server runtime**: `tsx` in production deps — avoids ESM/CJS `__dirname` issues
 
 ### Pre-Deployment Checklist
-1. Set `INVITE_CODE` env var on Render to a secret value — blocks random signups
-2. Set `CORS_ORIGIN` env var on Render to the Vercel frontend URL
-3. Set `JWT_SECRET` to a random 64+ character string
-4. Verify `ANTHROPIC_API_KEY` is set and Anthropic spending cap is in place
+1. Create a Turso database and set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` on Render
+2. Set `INVITE_CODE` env var on Render to a secret value — blocks random signups
+3. Set `CORS_ORIGIN` env var on Render to the Vercel frontend URL
+4. Set `JWT_SECRET` to a random 64+ character string
+5. Verify `ANTHROPIC_API_KEY` is set and Anthropic spending cap is in place
 
 ## Conventions
 - Keep commits small and focused — one per meaningful change

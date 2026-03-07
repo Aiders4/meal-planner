@@ -67,21 +67,21 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
 
     const userId = req.user!.userId;
 
-    const dailyCount = countMealsByUserToday(userId);
+    const dailyCount = await countMealsByUserToday(userId);
     if (dailyCount >= 10) {
       res.status(429).json({ error: 'Daily meal generation limit reached (10/day). Resets at midnight UTC.' });
       return;
     }
 
-    const profile = getProfile(userId);
+    const profile = await getProfile(userId);
     if (!profile) {
       res.status(400).json({ error: 'Profile must be configured before generating meals' });
       return;
     }
 
-    const restrictions = getRestrictions(userId);
-    const disliked = getDislikedIngredients(userId);
-    const recentTitles = getRecentAcceptedMealTitles(userId, 10);
+    const restrictions = await getRestrictions(userId);
+    const disliked = await getDislikedIngredients(userId);
+    const recentTitles = await getRecentAcceptedMealTitles(userId, 10);
     const cuisinePrefs: string[] = JSON.parse(profile.cuisine_preferences || '[]');
 
     const effectiveCalorie = parsed.data.calorie_target !== undefined ? parsed.data.calorie_target : profile.calorie_target;
@@ -102,7 +102,7 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
       preferences_override: parsed.data.preferences_override,
     });
 
-    const saved = createMeal(userId, {
+    const saved = await createMeal(userId, {
       title: meal.title,
       description: meal.description,
       ingredients: meal.ingredients,
@@ -137,7 +137,7 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
 });
 
 // GET /api/meals
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const parsed = listSchema.safeParse(req.query);
     if (!parsed.success) {
@@ -148,8 +148,8 @@ router.get('/', (req, res, next) => {
     const userId = req.user!.userId;
     const { status, limit, offset } = parsed.data;
 
-    const meals = getMealsByUser(userId, { status, limit, offset });
-    const total = countMealsByUser(userId, status ? { status } : undefined);
+    const meals = await getMealsByUser(userId, { status, limit, offset });
+    const total = await countMealsByUser(userId, status ? { status } : undefined);
 
     res.json({
       meals: meals.map((m) => ({
@@ -165,7 +165,7 @@ router.get('/', (req, res, next) => {
 });
 
 // PATCH /api/meals/:id
-router.patch('/:id', (req, res, next) => {
+router.patch('/:id', async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
@@ -180,13 +180,13 @@ router.patch('/:id', (req, res, next) => {
     }
 
     const userId = req.user!.userId;
-    const updated = updateMealStatus(id, userId, parsed.data.status);
+    const updated = await updateMealStatus(id, userId, parsed.data.status);
     if (!updated) {
       res.status(404).json({ error: 'Meal not found' });
       return;
     }
 
-    const meal = getMealById(id)!;
+    const meal = (await getMealById(id))!;
     res.json({
       meal: {
         ...meal,

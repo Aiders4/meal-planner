@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-import './db/connection.js';
+import { initializeDatabase } from './db/connection.js';
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profile.js';
 import mealsRoutes from './routes/meals.js';
@@ -39,6 +39,14 @@ app.use('/api/meals', mealsRoutes);
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+async function start() {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

@@ -57,12 +57,12 @@ const dislikedIngredientsSchema = z.object({
 });
 
 // GET /api/profile
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const userId = req.user!.userId;
-    const profile = getProfile(userId);
-    const dietary_restrictions = getRestrictions(userId);
-    const disliked_ingredients = getDislikedIngredients(userId);
+    const profile = await getProfile(userId);
+    const dietary_restrictions = await getRestrictions(userId);
+    const disliked_ingredients = await getDislikedIngredients(userId);
 
     res.json({
       profile: profile || null,
@@ -75,7 +75,7 @@ router.get('/', (req, res, next) => {
 });
 
 // PUT /api/profile
-router.put('/', (req, res, next) => {
+router.put('/', async (req, res, next) => {
   try {
     const parsed = profileSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -84,7 +84,7 @@ router.put('/', (req, res, next) => {
     }
 
     const userId = req.user!.userId;
-    const profile = upsertProfile(userId, parsed.data);
+    const profile = await upsertProfile(userId, parsed.data);
 
     res.json({ profile });
   } catch (err) {
@@ -93,7 +93,7 @@ router.put('/', (req, res, next) => {
 });
 
 // PUT /api/profile/restrictions
-router.put('/restrictions', (req, res, next) => {
+router.put('/restrictions', async (req, res, next) => {
   try {
     const parsed = restrictionSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -102,7 +102,7 @@ router.put('/restrictions', (req, res, next) => {
     }
 
     const userId = req.user!.userId;
-    const dietary_restrictions = setRestrictions(userId, parsed.data.restrictions);
+    const dietary_restrictions = await setRestrictions(userId, parsed.data.restrictions);
 
     res.json({ dietary_restrictions });
   } catch (err) {
@@ -111,7 +111,7 @@ router.put('/restrictions', (req, res, next) => {
 });
 
 // PUT /api/profile/disliked-ingredients
-router.put('/disliked-ingredients', (req, res, next) => {
+router.put('/disliked-ingredients', async (req, res, next) => {
   try {
     const parsed = dislikedIngredientsSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -120,7 +120,7 @@ router.put('/disliked-ingredients', (req, res, next) => {
     }
 
     const userId = req.user!.userId;
-    const disliked_ingredients = setDislikedIngredients(userId, parsed.data.ingredients);
+    const disliked_ingredients = await setDislikedIngredients(userId, parsed.data.ingredients);
 
     res.json({ disliked_ingredients });
   } catch (err) {

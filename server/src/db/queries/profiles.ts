@@ -1,4 +1,4 @@
-import db from '../connection.js';
+import client from '../connection.js';
 
 export interface Profile {
   id: number;
@@ -34,88 +34,94 @@ export interface DislikedIngredient {
   ingredient: string;
 }
 
-export function getProfile(userId: number): Profile | undefined {
-  const stmt = db.prepare('SELECT * FROM profiles WHERE user_id = ?');
-  return stmt.get(userId) as Profile | undefined;
+export async function getProfile(userId: number): Promise<Profile | undefined> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM profiles WHERE user_id = ?',
+    args: [userId],
+  });
+  return result.rows[0] as unknown as Profile | undefined;
 }
 
-export function upsertProfile(userId: number, data: ProfileData): Profile {
+export async function upsertProfile(userId: number, data: ProfileData): Promise<Profile> {
   const cuisineJson = data.cuisine_preferences
     ? JSON.stringify(data.cuisine_preferences)
     : '[]';
 
-  const stmt = db.prepare(`
-    INSERT INTO profiles (user_id, calorie_target, protein_target, carb_target, fat_target, cuisine_preferences, max_cook_time_minutes)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET
-      calorie_target = excluded.calorie_target,
-      protein_target = excluded.protein_target,
-      carb_target = excluded.carb_target,
-      fat_target = excluded.fat_target,
-      cuisine_preferences = excluded.cuisine_preferences,
-      max_cook_time_minutes = excluded.max_cook_time_minutes,
-      updated_at = datetime('now')
-  `);
-
-  stmt.run(
-    userId,
-    data.calorie_target ?? null,
-    data.protein_target ?? null,
-    data.carb_target ?? null,
-    data.fat_target ?? null,
-    cuisineJson,
-    data.max_cook_time_minutes ?? null
-  );
-
-  return getProfile(userId)!;
-}
-
-export function getRestrictions(userId: number): DietaryRestriction[] {
-  const stmt = db.prepare('SELECT * FROM dietary_restrictions WHERE user_id = ?');
-  return stmt.all(userId) as DietaryRestriction[];
-}
-
-export function setRestrictions(
-  userId: number,
-  restrictions: { category: string; value: string }[]
-): DietaryRestriction[] {
-  const deleteStmt = db.prepare('DELETE FROM dietary_restrictions WHERE user_id = ?');
-  const insertStmt = db.prepare(
-    'INSERT INTO dietary_restrictions (user_id, category, value) VALUES (?, ?, ?)'
-  );
-
-  const transaction = db.transaction(() => {
-    deleteStmt.run(userId);
-    for (const r of restrictions) {
-      insertStmt.run(userId, r.category, r.value);
-    }
+  await client.execute({
+    sql: `
+      INSERT INTO profiles (user_id, calorie_target, protein_target, carb_target, fat_target, cuisine_preferences, max_cook_time_minutes)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET
+        calorie_target = excluded.calorie_target,
+        protein_target = excluded.protein_target,
+        carb_target = excluded.carb_target,
+        fat_target = excluded.fat_target,
+        cuisine_preferences = excluded.cuisine_preferences,
+        max_cook_time_minutes = excluded.max_cook_time_minutes,
+        updated_at = datetime('now')
+    `,
+    args: [
+      userId,
+      data.calorie_target ?? null,
+      data.protein_target ?? null,
+      data.carb_target ?? null,
+      data.fat_target ?? null,
+      cuisineJson,
+      data.max_cook_time_minutes ?? null,
+    ],
   });
 
-  transaction();
+  return (await getProfile(userId))!;
+}
+
+export async function getRestrictions(userId: number): Promise<DietaryRestriction[]> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM dietary_restrictions WHERE user_id = ?',
+    args: [userId],
+  });
+  return result.rows as unknown as DietaryRestriction[];
+}
+
+export async function setRestrictions(
+  userId: number,
+  restrictions: { category: string; value: string }[]
+): Promise<DietaryRestriction[]> {
+  await client.batch(
+    [
+      { sql: 'DELETE FROM dietary_restrictions WHERE user_id = ?', args: [userId] },
+      ...restrictions.map((r) => ({
+        sql: 'INSERT INTO dietary_restrictions (user_id, category, value) VALUES (?, ?, ?)',
+        args: [userId, r.category, r.value],
+      })),
+    ],
+    'write'
+  );
+
   return getRestrictions(userId);
 }
 
-export function getDislikedIngredients(userId: number): DislikedIngredient[] {
-  const stmt = db.prepare('SELECT * FROM disliked_ingredients WHERE user_id = ?');
-  return stmt.all(userId) as DislikedIngredient[];
+export async function getDislikedIngredients(userId: number): Promise<DislikedIngredient[]> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM disliked_ingredients WHERE user_id = ?',
+    args: [userId],
+  });
+  return result.rows as unknown as DislikedIngredient[];
 }
 
-export function setDislikedIngredients(
+export async function setDislikedIngredients(
   userId: number,
   ingredients: string[]
-): DislikedIngredient[] {
-  const deleteStmt = db.prepare('DELETE FROM disliked_ingredients WHERE user_id = ?');
-  const insertStmt = db.prepare(
-    'INSERT INTO disliked_ingredients (user_id, ingredient) VALUES (?, ?)'
+): Promise<DislikedIngredient[]> {
+  await client.batch(
+    [
+      { sql: 'DELETE FROM disliked_ingredients WHERE user_id = ?', args: [userId] },
+      ...ingredients.map((ingredient) => ({
+        sql: 'INSERT INTO disliked_ingredients (user_id, ingredient) VALUES (?, ?)',
+        args: [userId, ingredient],
+      })),
+    ],
+    'write'
   );
 
-  const transaction = db.transaction(() => {
-    deleteStmt.run(userId);
-    for (const ingredient of ingredients) {
-      insertStmt.run(userId, ingredient);
-    }
-  });
-
-  transaction();
   return getDislikedIngredients(userId);
 }

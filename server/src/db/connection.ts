@@ -1,27 +1,35 @@
-import Database from 'better-sqlite3';
+import { createClient } from '@libsql/client';
 import path from 'path';
 import fs from 'fs';
 
-const dbPath = process.env.DATABASE_PATH || './data/meal-planner.db';
-const resolvedPath = path.resolve(dbPath);
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Ensure the data directory exists
-const dir = path.dirname(resolvedPath);
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
+const client = isProduction
+  ? createClient({
+      url: process.env.TURSO_DATABASE_URL!,
+      authToken: process.env.TURSO_AUTH_TOKEN!,
+    })
+  : createClient({
+      url: `file:${process.env.DATABASE_PATH || './data/meal-planner.db'}`,
+    });
+
+// Ensure data directory exists for local development
+if (!isProduction) {
+  const dbPath = process.env.DATABASE_PATH || './data/meal-planner.db';
+  const dir = path.dirname(path.resolve(dbPath));
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
-const db = new Database(resolvedPath);
+export async function initializeDatabase(): Promise<void> {
+  // Enable foreign key enforcement
+  await client.execute('PRAGMA foreign_keys = ON');
 
-// Enable WAL mode for better concurrent read performance
-db.pragma('journal_mode = WAL');
+  // Read and execute the schema
+  const schemaPath = path.join(__dirname, 'schema.sql');
+  const schema = fs.readFileSync(schemaPath, 'utf-8');
+  await client.executeMultiple(schema);
+}
 
-// Enable foreign key enforcement
-db.pragma('foreign_keys = ON');
-
-// Read and execute the schema
-const schemaPath = path.join(__dirname, 'schema.sql');
-const schema = fs.readFileSync(schemaPath, 'utf-8');
-db.exec(schema);
-
-export default db;
+export default client;
