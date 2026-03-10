@@ -144,3 +144,27 @@ export async function getRecentAcceptedMealTitles(userId: number, limit: number 
   });
   return (result.rows as unknown as { title: string }[]).map(r => r.title);
 }
+
+export async function getRecentRejectedMealTitles(userId: number, limit: number = 10): Promise<string[]> {
+  const result = await client.execute({
+    sql: `SELECT title FROM meals WHERE user_id = ? AND status = 'rejected' ORDER BY created_at DESC LIMIT ?`,
+    args: [userId, limit],
+  });
+  return (result.rows as unknown as { title: string }[]).map(r => r.title);
+}
+
+export async function deletePendingMeals(userId: number): Promise<number> {
+  const result = await client.execute({
+    sql: `DELETE FROM meals WHERE user_id = ? AND status = 'pending'`,
+    args: [userId],
+  });
+  return result.rowsAffected ?? 0;
+}
+
+export async function getPendingMeal(userId: number): Promise<Meal | undefined> {
+  const result = await client.execute({
+    sql: `SELECT * FROM meals WHERE user_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1`,
+    args: [userId],
+  });
+  return result.rows[0] as unknown as Meal | undefined;
+}

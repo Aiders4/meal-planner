@@ -51,12 +51,24 @@ export default function HomePage() {
             fat_target: data.profile.fat_target,
           }
           setProfileDefaults(defaults)
+          setUsedTargets(defaults)
           setMacroInputs({
             calorie_target: defaults.calorie_target != null ? String(defaults.calorie_target) : '',
             protein_target: defaults.protein_target != null ? String(defaults.protein_target) : '',
             carb_target: defaults.carb_target != null ? String(defaults.carb_target) : '',
             fat_target: defaults.fat_target != null ? String(defaults.fat_target) : '',
           })
+
+          // Resume pending meal if one exists
+          api<{ meal: Meal | null }>('/api/meals/pending')
+            .then((res) => {
+              if (res.meal) {
+                setMeal(res.meal)
+              }
+            })
+            .catch(() => {
+              // Ignore — non-critical
+            })
         } else {
           setHasProfile(false)
         }

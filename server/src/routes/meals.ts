@@ -10,11 +10,23 @@ import {
   countMealsByUserToday,
   updateMealStatus,
   getRecentAcceptedMealTitles,
+  getRecentRejectedMealTitles,
+  deletePendingMeals,
+  getPendingMeal,
 } from '../db/queries/meals.js';
 import { getProfile, getRestrictions, getDislikedIngredients } from '../db/queries/profiles.js';
 import { generateMeal, AIServiceError } from '../services/ai.js';
 
 const router = Router();
+
+/** Parse a JSON column that may have been double-stringified */
+function parseJsonColumn(value: string): unknown {
+  let result: unknown = JSON.parse(value);
+  if (typeof result === 'string') {
+    result = JSON.parse(result);
+  }
+  return result;
+}
 
 const generateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -51,6 +63,33 @@ const updateStatusSchema = z.object({
   status: z.enum(['accepted', 'rejected']),
 });
 
+// GET /api/meals/pending
+router.get('/pending', async (req, res, next) => {
+  try {
+    const userId = req.user!.userId;
+    const meal = await getPendingMeal(userId);
+    if (!meal) {
+      res.json({ meal: null });
+      return;
+    }
+    try {
+      res.json({
+        meal: {
+          ...meal,
+          ingredients: parseJsonColumn(meal.ingredients),
+          instructions: parseJsonColumn(meal.instructions),
+        },
+      });
+    } catch {
+      // Corrupt pending meal — discard it and return null
+      await deletePendingMeals(userId);
+      res.json({ meal: null });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/meals/generate
 router.post('/generate', generateLimiter, async (req, res, next) => {
   try {
@@ -79,9 +118,12 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
       return;
     }
 
+    await deletePendingMeals(userId);
+
     const restrictions = await getRestrictions(userId);
     const disliked = await getDislikedIngredients(userId);
     const recentTitles = await getRecentAcceptedMealTitles(userId, 10);
+    const rejectedTitles = await getRecentRejectedMealTitles(userId, 10);
     const cuisinePrefs: string[] = JSON.parse(profile.cuisine_preferences || '[]');
 
     const effectiveCalorie = parsed.data.calorie_target !== undefined ? parsed.data.calorie_target : profile.calorie_target;
@@ -99,6 +141,7 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
       restrictions: restrictions.map((r) => ({ category: r.category, value: r.value })),
       disliked_ingredients: disliked.map((d) => d.ingredient),
       recent_meal_titles: recentTitles,
+      recent_rejected_titles: rejectedTitles,
       preferences_override: parsed.data.preferences_override,
     });
 
@@ -118,8 +161,8 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
     res.status(201).json({
       meal: {
         ...saved,
-        ingredients: JSON.parse(saved.ingredients),
-        instructions: JSON.parse(saved.instructions),
+        ingredients: parseJsonColumn(saved.ingredients),
+        instructions: parseJsonColumn(saved.instructions),
       },
       warnings,
     });
@@ -154,8 +197,8 @@ router.get('/', async (req, res, next) => {
     res.json({
       meals: meals.map((m) => ({
         ...m,
-        ingredients: JSON.parse(m.ingredients),
-        instructions: JSON.parse(m.instructions),
+        ingredients: parseJsonColumn(m.ingredients),
+        instructions: parseJsonColumn(m.instructions),
       })),
       total,
     });
@@ -190,8 +233,8 @@ router.patch('/:id', async (req, res, next) => {
     res.json({
       meal: {
         ...meal,
-        ingredients: JSON.parse(meal.ingredients),
-        instructions: JSON.parse(meal.instructions),
+        ingredients: parseJsonColumn(meal.ingredients),
+        instructions: parseJsonColumn(meal.instructions),
       },
     });
   } catch (err) {

@@ -18,6 +18,7 @@ export interface GenerateMealInput {
   restrictions: Array<{ category: string; value: string }>;
   disliked_ingredients: string[];
   recent_meal_titles: string[];
+  recent_rejected_titles: string[];
   preferences_override?: {
     cuisine?: string;
     max_cook_time_minutes?: number;
@@ -133,6 +134,10 @@ function buildUserMessage(input: GenerateMealInput): string {
 
   if (input.recent_meal_titles.length > 0) {
     parts.push(`- Recently accepted meals (avoid repeating): ${input.recent_meal_titles.join(', ')}`);
+  }
+
+  if (input.recent_rejected_titles.length > 0) {
+    parts.push(`- Recently rejected meals (do not suggest similar): ${input.recent_rejected_titles.join(', ')}`);
   }
 
   return parts.join('\n');

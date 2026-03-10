@@ -62,7 +62,8 @@ Monorepo with npm workspaces:
 - `PUT /api/profile` — upsert macro targets + cook time + cuisine prefs
 - `PUT /api/profile/restrictions` — replace all dietary restrictions
 - `PUT /api/profile/disliked-ingredients` — replace all disliked ingredients
-- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target? }` optional per-meal overrides; falls back to profile defaults. Returns `{ meal, warnings }`
+- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target? }` optional per-meal overrides; falls back to profile defaults. Auto-deletes any pending meals first. Sends both accepted and rejected meal titles to AI for avoidance. Returns `{ meal, warnings }`
+- `GET /api/meals/pending` — returns `{ meal }` (most recent pending meal) or `{ meal: null }`
 - `GET /api/meals?status=accepted&limit=20&offset=0` — paginated meal history with parsed `ingredients`/`instructions` arrays
 - `PATCH /api/meals/:id` — `{ status: 'accepted' | 'rejected' }` → `{ meal }`
 
@@ -74,6 +75,8 @@ Monorepo with npm workspaces:
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
 - **Async DB layer**: All query functions in `db/queries/` are `async` and return Promises — always `await` them in route handlers
 - **DB transactions**: Use `client.batch([...statements], 'write')` for atomic multi-statement operations
+- **Meal status lifecycle**: Pending meals auto-delete on new generation; rejected meal titles fed to AI for avoidance; HomePage resumes last pending meal on mount via `GET /api/meals/pending`
+- **JSON column parsing**: Use `parseJsonColumn()` in `routes/meals.ts` instead of raw `JSON.parse` — handles double-stringified legacy data and discards corrupt pending meals gracefully
 
 ## Deployment
 - **Frontend**: Vercel with `client/vercel.json` for SPA rewrites
