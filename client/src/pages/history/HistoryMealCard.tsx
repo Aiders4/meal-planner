@@ -67,6 +67,7 @@ export default function HistoryMealCard({
               <p className="text-sm text-muted-foreground">{summary}</p>
             )}
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {meal.meal_type && <span className="capitalize">{meal.meal_type}</span>}
               {meal.cuisine && <span>{meal.cuisine}</span>}
               {meal.cook_time_minutes && (
                 <span>{meal.cook_time_minutes} min</span>

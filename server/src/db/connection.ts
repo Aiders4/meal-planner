@@ -30,6 +30,13 @@ export async function initializeDatabase(): Promise<void> {
   const schemaPath = path.join(__dirname, 'schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf-8');
   await client.executeMultiple(schema);
+
+  // Migration: add meal_type column to existing meals table
+  try {
+    await client.execute('ALTER TABLE meals ADD COLUMN meal_type TEXT');
+  } catch {
+    // Column already exists — ignore
+  }
 }
 
 export default client;

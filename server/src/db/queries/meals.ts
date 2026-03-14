@@ -13,6 +13,7 @@ export interface Meal {
   fat_g: number | null;
   cook_time_minutes: number | null;
   cuisine: string | null;
+  meal_type: string | null;
   status: string;
   created_at: string;
 }
@@ -28,11 +29,13 @@ export interface MealData {
   fat_g?: number | null;
   cook_time_minutes?: number | null;
   cuisine?: string | null;
+  meal_type?: string | null;
 }
 
 export interface MealFilters {
   status?: string;
   cuisine?: string;
+  meal_type?: string;
   limit?: number;
   offset?: number;
 }
@@ -40,8 +43,8 @@ export interface MealFilters {
 export async function createMeal(userId: number, data: MealData): Promise<Meal> {
   const result = await client.execute({
     sql: `
-      INSERT INTO meals (user_id, title, description, ingredients, instructions, calories, protein_g, carbs_g, fat_g, cook_time_minutes, cuisine)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO meals (user_id, title, description, ingredients, instructions, calories, protein_g, carbs_g, fat_g, cook_time_minutes, cuisine, meal_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     args: [
       userId,
@@ -55,6 +58,7 @@ export async function createMeal(userId: number, data: MealData): Promise<Meal> 
       data.fat_g ?? null,
       data.cook_time_minutes ?? null,
       data.cuisine ?? null,
+      data.meal_type ?? null,
     ],
   });
 
@@ -81,6 +85,11 @@ export async function getMealsByUser(userId: number, filters: MealFilters = {}):
   if (filters.cuisine) {
     conditions.push('cuisine = ?');
     params.push(filters.cuisine);
+  }
+
+  if (filters.meal_type) {
+    conditions.push('meal_type = ?');
+    params.push(filters.meal_type);
   }
 
   const limit = filters.limit ?? 20;
@@ -111,13 +120,18 @@ export async function updateMealStatus(
   return (result.rowsAffected ?? 0) > 0;
 }
 
-export async function countMealsByUser(userId: number, filters?: { status?: string }): Promise<number> {
+export async function countMealsByUser(userId: number, filters?: { status?: string; meal_type?: string }): Promise<number> {
   const conditions = ['user_id = ?'];
   const params: (string | number)[] = [userId];
 
   if (filters?.status) {
     conditions.push('status = ?');
     params.push(filters.status);
+  }
+
+  if (filters?.meal_type) {
+    conditions.push('meal_type = ?');
+    params.push(filters.meal_type);
   }
 
   const result = await client.execute({

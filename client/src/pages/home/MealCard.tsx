@@ -30,6 +30,9 @@ export default function MealCard({
           <CardDescription>{meal.description}</CardDescription>
         )}
         <div className="flex flex-wrap gap-2 pt-1">
+          {meal.meal_type && (
+            <Badge variant="secondary" className="capitalize">{meal.meal_type}</Badge>
+          )}
           {meal.cuisine && (
             <Badge variant="secondary">{meal.cuisine}</Badge>
           )}

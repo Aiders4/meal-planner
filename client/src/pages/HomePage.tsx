@@ -4,9 +4,12 @@ import { api, ApiError } from '@/lib/api'
 import { validateMacroInputs } from '@/lib/validation'
 import type { ProfileResponse } from '@/types/profile'
 import type { Meal, MacroTargets, GenerateResponse } from '@/types/meal'
+import { getDefaultMealType } from '@/lib/constants'
+import type { MealType } from '@/lib/constants'
 import NoProfileAlert from './home/NoProfileAlert'
 import GenerateButton from './home/GenerateButton'
 import MealCard from './home/MealCard'
+import MealTypeSelector from './home/MealTypeSelector'
 import MacroTargetsSection from './profile/MacroTargetsSection'
 
 function parseOptionalInt(value: string): number | null {
@@ -35,6 +38,7 @@ export default function HomePage() {
     carb_target: null,
     fat_target: null,
   })
+  const [mealType, setMealType] = useState<MealType | null>(() => getDefaultMealType())
   const [meal, setMeal] = useState<Meal | null>(null)
   const [generating, setGenerating] = useState(false)
   const [updating, setUpdating] = useState(false)
@@ -122,6 +126,7 @@ export default function HomePage() {
           protein_target: targets.protein_target,
           carb_target: targets.carb_target,
           fat_target: targets.fat_target,
+          meal_type: mealType,
         }),
       })
       setMeal(data.meal)
@@ -198,6 +203,9 @@ export default function HomePage() {
             <p className="text-muted-foreground">
               Adjust targets for this meal, then generate.
             </p>
+          </div>
+          <div className="w-full max-w-md text-left">
+            <MealTypeSelector value={mealType} onChange={setMealType} />
           </div>
           <div className="w-full max-w-md text-left">
             <MacroTargetsSection

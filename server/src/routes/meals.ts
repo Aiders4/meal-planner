@@ -45,6 +45,7 @@ const generateSchema = z.object({
   protein_target: z.number().int().min(0).max(1000).nullable().optional(),
   carb_target: z.number().int().min(0).max(1000).nullable().optional(),
   fat_target: z.number().int().min(0).max(1000).nullable().optional(),
+  meal_type: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).nullable().optional(),
   preferences_override: z
     .object({
       cuisine: z.string().min(1).optional(),
@@ -55,6 +56,7 @@ const generateSchema = z.object({
 
 const listSchema = z.object({
   status: z.enum(['pending', 'accepted', 'rejected']).optional(),
+  meal_type: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).optional(),
   limit: z.coerce.number().int().positive().max(100).default(20),
   offset: z.coerce.number().int().nonnegative().default(0),
 });
@@ -136,6 +138,7 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
       protein_target: effectiveProtein,
       carb_target: effectiveCarb,
       fat_target: effectiveFat,
+      meal_type: parsed.data.meal_type ?? null,
       cuisine_preferences: cuisinePrefs,
       max_cook_time_minutes: profile.max_cook_time_minutes,
       restrictions: restrictions.map((r) => ({ category: r.category, value: r.value })),
@@ -156,6 +159,7 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
       fat_g: meal.fat_g,
       cook_time_minutes: meal.cook_time_minutes,
       cuisine: meal.cuisine,
+      meal_type: parsed.data.meal_type ?? null,
     });
 
     res.status(201).json({
@@ -189,10 +193,17 @@ router.get('/', async (req, res, next) => {
     }
 
     const userId = req.user!.userId;
-    const { status, limit, offset } = parsed.data;
+    const { status, meal_type, limit, offset } = parsed.data;
 
-    const meals = await getMealsByUser(userId, { status, limit, offset });
-    const total = await countMealsByUser(userId, status ? { status } : undefined);
+    const filters: { status?: string; cuisine?: string; meal_type?: string; limit: number; offset: number } = { limit, offset };
+    if (status) filters.status = status;
+    if (meal_type) filters.meal_type = meal_type;
+
+    const meals = await getMealsByUser(userId, filters);
+    const countFilters: { status?: string; meal_type?: string } = {};
+    if (status) countFilters.status = status;
+    if (meal_type) countFilters.meal_type = meal_type;
+    const total = await countMealsByUser(userId, Object.keys(countFilters).length > 0 ? countFilters : undefined);
 
     res.json({
       meals: meals.map((m) => ({

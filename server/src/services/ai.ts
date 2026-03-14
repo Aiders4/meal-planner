@@ -13,6 +13,7 @@ export interface GenerateMealInput {
   protein_target: number | null;
   carb_target: number | null;
   fat_target: number | null;
+  meal_type?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | null;
   cuisine_preferences: string[];
   max_cook_time_minutes: number | null;
   restrictions: Array<{ category: string; value: string }>;
@@ -51,7 +52,8 @@ Guidelines:
 - Provide clear, actionable cooking instructions
 - Use common, accessible ingredients unless the user prefers otherwise
 - Respect all dietary restrictions and avoid disliked ingredients completely
-- If given recent meal titles, avoid repeating similar meals`;
+- If given recent meal titles, avoid repeating similar meals
+- When a meal type is specified, generate meals appropriate for that context (e.g., lighter/quicker for breakfast, heartier for dinner, smaller for snacks)`;
 
 const CREATE_MEAL_TOOL: Anthropic.Tool = {
   name: 'create_meal',
@@ -104,6 +106,10 @@ function buildUserMessage(input: GenerateMealInput): string {
   }
   if (input.fat_target) {
     parts.push(`- Target fat: ${input.fat_target}g`);
+  }
+
+  if (input.meal_type) {
+    parts.push(`- Meal type: ${input.meal_type} (generate a meal appropriate for this time of day)`);
   }
 
   const cuisine = input.preferences_override?.cuisine;

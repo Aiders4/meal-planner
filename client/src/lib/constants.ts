@@ -20,3 +20,15 @@ export const COOK_TIME_MIN = 15
 export const COOK_TIME_MAX = 120
 export const COOK_TIME_STEP = 5
 export const COOK_TIME_DEFAULT = 60
+
+export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
+export type MealType = (typeof MEAL_TYPES)[number]
+
+export function getDefaultMealType(): MealType {
+  const hour = new Date().getHours()
+  if (hour >= 21 || hour < 11) {
+    return hour >= 5 && hour < 11 ? 'breakfast' : 'snack'
+  }
+  if (hour < 15) return 'lunch'
+  return 'dinner'
+}

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS meals (
   fat_g INTEGER,
   cook_time_minutes INTEGER,
   cuisine TEXT,
+  meal_type TEXT,
   status TEXT NOT NULL DEFAULT 'pending',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

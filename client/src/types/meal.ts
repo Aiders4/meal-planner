@@ -17,6 +17,7 @@ export interface Meal {
   fat_g: number | null
   cook_time_minutes: number | null
   cuisine: string | null
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack' | null
   status: 'pending' | 'accepted' | 'rejected'
   created_at: string
 }

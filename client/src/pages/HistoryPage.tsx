@@ -4,6 +4,7 @@ import { Separator } from '@/components/ui/separator'
 import { api, ApiError } from '@/lib/api'
 import type { ProfileResponse } from '@/types/profile'
 import type { Meal, MacroTargets } from '@/types/meal'
+import type { MealType } from '@/lib/constants'
 import HistoryFilters from './history/HistoryFilters'
 import type { FilterValue } from './history/HistoryFilters'
 import HistoryMealCard from './history/HistoryMealCard'
@@ -14,6 +15,7 @@ const PAGE_SIZE = 20
 
 export default function HistoryPage() {
   const [filter, setFilter] = useState<FilterValue>('all')
+  const [mealTypeFilter, setMealTypeFilter] = useState<MealType | null>(null)
   const [meals, setMeals] = useState<Meal[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -45,9 +47,10 @@ export default function HistoryPage() {
   const fetchMeals = useCallback(
     async (offset: number, append: boolean) => {
       const statusParam = filter === 'all' ? '' : `&status=${filter}`
+      const mealTypeParam = mealTypeFilter ? `&meal_type=${mealTypeFilter}` : ''
       try {
         const data = await api<{ meals: Meal[]; total: number }>(
-          `/api/meals?limit=${PAGE_SIZE}&offset=${offset}${statusParam}`
+          `/api/meals?limit=${PAGE_SIZE}&offset=${offset}${statusParam}${mealTypeParam}`
         )
         setMeals((prev) => (append ? [...prev, ...data.meals] : data.meals))
         setTotal(data.total)
@@ -59,7 +62,7 @@ export default function HistoryPage() {
         }
       }
     },
-    [filter]
+    [filter, mealTypeFilter]
   )
 
   useEffect(() => {
@@ -86,7 +89,12 @@ export default function HistoryPage() {
       </div>
       <Separator />
 
-      <HistoryFilters activeFilter={filter} onFilterChange={setFilter} />
+      <HistoryFilters
+        activeFilter={filter}
+        onFilterChange={setFilter}
+        mealTypeFilter={mealTypeFilter}
+        onMealTypeChange={setMealTypeFilter}
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
