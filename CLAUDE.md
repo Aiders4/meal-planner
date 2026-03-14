@@ -30,7 +30,8 @@ Monorepo with npm workspaces:
 - `src/lib/api.ts` — fetch wrapper with auth header, 401 redirect, `ApiError`
 - `src/context/AuthContext.tsx` — `AuthProvider`, `useAuth()`, login/register/logout
 - `src/components/layout/AppLayout.tsx` — app shell with header, nav, `<Outlet />`
-- `src/lib/constants.ts` — mirrors server-side allowed values (restrictions, cuisines, cook time bounds, meal types)
+- `src/lib/constants.ts` — mirrors server-side allowed values (restrictions, cuisines, cook time bounds, meal types, localStorage keys)
+- `src/lib/macro-conversion.ts` — `MacroUnit` type, grams↔percent conversion utilities
 - `src/types/` — `profile.ts`, `meal.ts` type definitions
 - Routes: `/login`, `/register`, `/` (home), `/profile`, `/history`
 - MealCard `onAccept`/`onReject`/`updating` props are optional — omit to hide action buttons
@@ -78,6 +79,7 @@ Monorepo with npm workspaces:
 - **Meal status lifecycle**: Pending meals auto-delete on new generation; rejected meal titles fed to AI for avoidance; HomePage resumes last pending meal on mount via `GET /api/meals/pending`
 - **JSON column parsing**: Use `parseJsonColumn()` in `routes/meals.ts` instead of raw `JSON.parse` — handles double-stringified legacy data and discards corrupt pending meals gracefully
 - **Meal type**: Optional `meal_type` (breakfast/lunch/dinner/snack) on meals; auto-detected by time of day on HomePage; passed to AI for context-appropriate generation; filterable in history
+- **Macro unit toggle**: Profile page supports grams/percent input for protein/carbs/fat; conversion is client-side only, DB always stores grams. `MacroTargetsSection` accepts optional `macroUnit`/`onMacroUnitChange` props — omit them (as HomePage does) for grams-only mode
 - **DB migrations**: New columns added via try/catch `ALTER TABLE` in `initializeDatabase()` — catches "duplicate column" for idempotency
 
 ## Deployment

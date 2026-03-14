@@ -21,6 +21,8 @@ export const COOK_TIME_MAX = 120
 export const COOK_TIME_STEP = 5
 export const COOK_TIME_DEFAULT = 60
 
+export const MACRO_UNIT_STORAGE_KEY = 'meal-planner-macro-unit'
+
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
 export type MealType = (typeof MEAL_TYPES)[number]
 

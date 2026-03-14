@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { api, ApiError } from '@/lib/api'
 import { validateMacroInputs } from '@/lib/validation'
-import { COOK_TIME_DEFAULT } from '@/lib/constants'
+import { COOK_TIME_DEFAULT, MACRO_UNIT_STORAGE_KEY } from '@/lib/constants'
+import { convertMacroField } from '@/lib/macro-conversion'
+import type { MacroUnit } from '@/lib/macro-conversion'
 import type { ProfileResponse, ProfileFormState } from '@/types/profile'
 import MacroTargetsSection from './profile/MacroTargetsSection'
 import DietaryRestrictionsSection from './profile/DietaryRestrictionsSection'
@@ -48,15 +50,30 @@ function parseOptionalInt(value: string): number | null {
   return parseInt(value, 10)
 }
 
+const MACRO_FIELDS = ['protein_target', 'carb_target', 'fat_target'] as const
+
 export default function ProfilePage() {
   const [form, setForm] = useState<ProfileFormState>(emptyForm)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [macroUnit, setMacroUnit] = useState<MacroUnit>(() => {
+    const stored = localStorage.getItem(MACRO_UNIT_STORAGE_KEY)
+    return stored === 'percent' ? 'percent' : 'grams'
+  })
 
   useEffect(() => {
     api<ProfileResponse>('/api/profile')
-      .then((data) => setForm(responseToForm(data)))
+      .then((data) => {
+        const formData = responseToForm(data)
+        const stored = localStorage.getItem(MACRO_UNIT_STORAGE_KEY)
+        if (stored === 'percent' && formData.calorie_target.trim() !== '') {
+          for (const key of MACRO_FIELDS) {
+            formData[key] = convertMacroField(formData[key], formData.calorie_target, key, 'grams', 'percent')
+          }
+        }
+        setForm(formData)
+      })
       .catch(() => toast.error('Failed to load profile'))
       .finally(() => setLoading(false))
   }, [])
@@ -106,8 +123,40 @@ export default function ProfilePage() {
     setForm((prev) => ({ ...prev, max_cook_time_minutes: value }))
   }
 
+  function handleMacroUnitChange(unit: MacroUnit) {
+    setForm((prev) => {
+      const next = { ...prev }
+      for (const key of MACRO_FIELDS) {
+        next[key] = convertMacroField(prev[key], prev.calorie_target, key, macroUnit, unit)
+      }
+      return next
+    })
+    setMacroUnit(unit)
+    localStorage.setItem(MACRO_UNIT_STORAGE_KEY, unit)
+    setErrors({})
+  }
+
+  const percentWarning = useMemo(() => {
+    if (macroUnit !== 'percent') return null
+    const sum = MACRO_FIELDS.reduce((acc, key) => {
+      const n = Number(form[key])
+      return acc + (isNaN(n) ? 0 : n)
+    }, 0)
+    if (sum > 100) return `Total is ${sum}% — exceeds 100%`
+    return null
+  }, [macroUnit, form.protein_target, form.carb_target, form.fat_target])
+
   function validate(): boolean {
-    const next = validateMacroInputs(form)
+    const next = validateMacroInputs(form, macroUnit)
+    if (macroUnit === 'percent' && Object.keys(next).length === 0) {
+      for (const key of MACRO_FIELDS) {
+        const grams = convertMacroField(form[key], form.calorie_target, key, 'percent', 'grams')
+        const n = Number(grams)
+        if (grams !== '' && n > 1000) {
+          next[key] = `Converts to ${n}g — exceeds 1,000g limit`
+        }
+      }
+    }
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -116,15 +165,23 @@ export default function ProfilePage() {
     if (!validate()) return
 
     setSubmitting(true)
+
+    const macroValues: Record<string, string> = {}
+    for (const key of MACRO_FIELDS) {
+      macroValues[key] = macroUnit === 'percent'
+        ? convertMacroField(form[key], form.calorie_target, key, 'percent', 'grams')
+        : form[key]
+    }
+
     try {
       await Promise.all([
         api('/api/profile', {
           method: 'PUT',
           body: JSON.stringify({
             calorie_target: parseOptionalInt(form.calorie_target),
-            protein_target: parseOptionalInt(form.protein_target),
-            carb_target: parseOptionalInt(form.carb_target),
-            fat_target: parseOptionalInt(form.fat_target),
+            protein_target: parseOptionalInt(macroValues.protein_target),
+            carb_target: parseOptionalInt(macroValues.carb_target),
+            fat_target: parseOptionalInt(macroValues.fat_target),
             cuisine_preferences: form.cuisine_preferences,
             max_cook_time_minutes: form.max_cook_time_minutes,
           }),
@@ -183,6 +240,9 @@ export default function ProfilePage() {
         }}
         onChange={updateField}
         errors={errors}
+        macroUnit={macroUnit}
+        onMacroUnitChange={handleMacroUnitChange}
+        percentWarning={percentWarning}
       />
 
       <DietaryRestrictionsSection
