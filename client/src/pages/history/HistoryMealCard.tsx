@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ShoppingCart, Check } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import MacroBarsSection from '../home/MacroBarsSection'
 import IngredientsSection from '../home/IngredientsSection'
@@ -11,6 +12,8 @@ import type { Meal, MacroTargets } from '@/types/meal'
 interface HistoryMealCardProps {
   meal: Meal
   targets: MacroTargets
+  onToggleShoppingList?: (mealId: number) => void
+  togglingShoppingList?: boolean
 }
 
 function StatusBadge({ status }: { status: Meal['status'] }) {
@@ -44,6 +47,8 @@ function formatDate(dateStr: string): string {
 export default function HistoryMealCard({
   meal,
   targets,
+  onToggleShoppingList,
+  togglingShoppingList,
 }: HistoryMealCardProps) {
   const [expanded, setExpanded] = useState(false)
   const summary = macroSummary(meal)
@@ -96,6 +101,29 @@ export default function HistoryMealCard({
           <Separator />
           <IngredientsSection ingredients={meal.ingredients} />
           <InstructionsSection instructions={meal.instructions} />
+          {meal.status === 'accepted' && onToggleShoppingList && (
+            <>
+              <Separator />
+              <Button
+                variant={meal.on_shopping_list ? 'outline' : 'default'}
+                size="sm"
+                disabled={togglingShoppingList}
+                onClick={() => onToggleShoppingList(meal.id)}
+              >
+                {meal.on_shopping_list ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    On shopping list
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Add to shopping list
+                  </>
+                )}
+              </Button>
+            </>
+          )}
         </CardContent>
       )}
     </Card>

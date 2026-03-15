@@ -37,6 +37,13 @@ export async function initializeDatabase(): Promise<void> {
   } catch {
     // Column already exists — ignore
   }
+
+  // Migration: add on_shopping_list column to meals table
+  try {
+    await client.execute('ALTER TABLE meals ADD COLUMN on_shopping_list INTEGER NOT NULL DEFAULT 0');
+  } catch {
+    // Column already exists — ignore
+  }
 }
 
 export default client;

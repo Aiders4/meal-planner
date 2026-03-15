@@ -10,6 +10,7 @@ const navLinks = [
   { to: '/', label: 'Home', end: true },
   { to: '/profile', label: 'Profile' },
   { to: '/history', label: 'History' },
+  { to: '/shopping-list', label: 'Shopping List' },
 ]
 
 function NavItems({ onClick }: { onClick?: () => void }) {

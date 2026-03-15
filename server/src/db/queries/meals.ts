@@ -14,6 +14,7 @@ export interface Meal {
   cook_time_minutes: number | null;
   cuisine: string | null;
   meal_type: string | null;
+  on_shopping_list: number;
   status: string;
   created_at: string;
 }
@@ -69,6 +70,14 @@ export async function getMealById(id: number): Promise<Meal | undefined> {
   const result = await client.execute({
     sql: 'SELECT * FROM meals WHERE id = ?',
     args: [id],
+  });
+  return result.rows[0] as unknown as Meal | undefined;
+}
+
+export async function getMealByIdAndUser(id: number, userId: number): Promise<Meal | undefined> {
+  const result = await client.execute({
+    sql: 'SELECT * FROM meals WHERE id = ? AND user_id = ?',
+    args: [id, userId],
   });
   return result.rows[0] as unknown as Meal | undefined;
 }
@@ -181,4 +190,32 @@ export async function getPendingMeal(userId: number): Promise<Meal | undefined> 
     args: [userId],
   });
   return result.rows[0] as unknown as Meal | undefined;
+}
+
+export async function getShoppingListMeals(userId: number): Promise<Meal[]> {
+  const result = await client.execute({
+    sql: `SELECT * FROM meals WHERE user_id = ? AND on_shopping_list = 1 AND status = 'accepted' ORDER BY created_at DESC`,
+    args: [userId],
+  });
+  return result.rows as unknown as Meal[];
+}
+
+export async function updateMealShoppingList(
+  mealId: number,
+  userId: number,
+  onShoppingList: boolean
+): Promise<boolean> {
+  const result = await client.execute({
+    sql: `UPDATE meals SET on_shopping_list = ? WHERE id = ? AND user_id = ? AND status = 'accepted'`,
+    args: [onShoppingList ? 1 : 0, mealId, userId],
+  });
+  return (result.rowsAffected ?? 0) > 0;
+}
+
+export async function clearShoppingList(userId: number): Promise<number> {
+  const result = await client.execute({
+    sql: `UPDATE meals SET on_shopping_list = 0 WHERE user_id = ? AND on_shopping_list = 1`,
+    args: [userId],
+  });
+  return result.rowsAffected ?? 0;
 }

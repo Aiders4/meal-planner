@@ -18,6 +18,7 @@ export interface Meal {
   cook_time_minutes: number | null
   cuisine: string | null
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack' | null
+  on_shopping_list?: boolean
   status: 'pending' | 'accepted' | 'rejected'
   created_at: string
 }

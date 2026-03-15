@@ -77,6 +77,34 @@ export default function HistoryPage() {
     setLoadingMore(false)
   }
 
+  const [togglingShoppingList, setTogglingShoppingList] = useState<number | null>(null)
+
+  async function handleToggleShoppingList(mealId: number) {
+    const meal = meals.find((m) => m.id === mealId)
+    const current = meal?.on_shopping_list ?? false
+    setTogglingShoppingList(mealId)
+    try {
+      await api(`/api/meals/${mealId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ on_shopping_list: !current }),
+      })
+      setMeals((prev) =>
+        prev.map((m) =>
+          m.id === mealId ? { ...m, on_shopping_list: !current } : m
+        )
+      )
+      toast.success(current ? 'Removed from shopping list' : 'Added to shopping list')
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message)
+      } else {
+        toast.error('Failed to update shopping list')
+      }
+    } finally {
+      setTogglingShoppingList(null)
+    }
+  }
+
   const hasMore = meals.length < total
 
   return (
@@ -105,7 +133,13 @@ export default function HistoryPage() {
       ) : (
         <div className="space-y-3">
           {meals.map((meal) => (
-            <HistoryMealCard key={meal.id} meal={meal} targets={targets} />
+            <HistoryMealCard
+              key={meal.id}
+              meal={meal}
+              targets={targets}
+              onToggleShoppingList={handleToggleShoppingList}
+              togglingShoppingList={togglingShoppingList === meal.id}
+            />
           ))}
           {hasMore && (
             <LoadMoreButton

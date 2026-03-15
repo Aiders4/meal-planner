@@ -4,11 +4,14 @@ import rateLimit from 'express-rate-limit';
 import { requireAuth } from '../middleware/auth.js';
 import {
   createMeal,
-  getMealById,
+  getMealByIdAndUser,
   getMealsByUser,
   countMealsByUser,
   countMealsByUserToday,
   updateMealStatus,
+  updateMealShoppingList,
+  getShoppingListMeals,
+  clearShoppingList,
   getRecentAcceptedMealTitles,
   getRecentRejectedMealTitles,
   deletePendingMeals,
@@ -61,9 +64,13 @@ const listSchema = z.object({
   offset: z.coerce.number().int().nonnegative().default(0),
 });
 
-const updateStatusSchema = z.object({
-  status: z.enum(['accepted', 'rejected']),
-});
+const updateMealSchema = z.object({
+  status: z.enum(['accepted', 'rejected']).optional(),
+  on_shopping_list: z.boolean().optional(),
+}).refine(
+  (data) => data.status !== undefined || data.on_shopping_list !== undefined,
+  { message: 'At least one of status or on_shopping_list is required' }
+);
 
 // GET /api/meals/pending
 router.get('/pending', async (req, res, next) => {
@@ -218,6 +225,34 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// GET /api/meals/shopping-list
+router.get('/shopping-list', async (req, res, next) => {
+  try {
+    const userId = req.user!.userId;
+    const meals = await getShoppingListMeals(userId);
+    res.json({
+      meals: meals.map((m) => ({
+        ...m,
+        ingredients: parseJsonColumn(m.ingredients),
+        instructions: parseJsonColumn(m.instructions),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/meals/shopping-list
+router.delete('/shopping-list', async (req, res, next) => {
+  try {
+    const userId = req.user!.userId;
+    const cleared = await clearShoppingList(userId);
+    res.json({ cleared });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PATCH /api/meals/:id
 router.patch('/:id', async (req, res, next) => {
   try {
@@ -227,20 +262,35 @@ router.patch('/:id', async (req, res, next) => {
       return;
     }
 
-    const parsed = updateStatusSchema.safeParse(req.body);
+    const parsed = updateMealSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.issues[0].message });
       return;
     }
 
     const userId = req.user!.userId;
-    const updated = await updateMealStatus(id, userId, parsed.data.status);
-    if (!updated) {
+
+    if (parsed.data.status) {
+      const updated = await updateMealStatus(id, userId, parsed.data.status);
+      if (!updated) {
+        res.status(404).json({ error: 'Meal not found' });
+        return;
+      }
+    }
+
+    if (parsed.data.on_shopping_list !== undefined) {
+      const updated = await updateMealShoppingList(id, userId, parsed.data.on_shopping_list);
+      if (!updated && !parsed.data.status) {
+        res.status(404).json({ error: 'Meal not found' });
+        return;
+      }
+    }
+
+    const meal = await getMealByIdAndUser(id, userId);
+    if (!meal) {
       res.status(404).json({ error: 'Meal not found' });
       return;
     }
-
-    const meal = (await getMealById(id))!;
     res.json({
       meal: {
         ...meal,
