@@ -53,7 +53,8 @@ Guidelines:
 - Use common, accessible ingredients unless the user prefers otherwise
 - Respect all dietary restrictions and avoid disliked ingredients completely
 - If given recent meal titles, avoid repeating similar meals
-- When a meal type is specified, generate meals appropriate for that context (e.g., lighter/quicker for breakfast, heartier for dinner, smaller for snacks)`;
+- When a meal type is specified, generate meals appropriate for that context (e.g., lighter/quicker for breakfast, heartier for dinner, smaller for snacks)
+- Use consistent measurement units: grams for solids, milliliters for liquids, and standard counts (e.g., "2 cloves garlic", "1 large egg"). Use teaspoons/tablespoons only for small amounts of spices, oils, or sauces.`;
 
 const CREATE_MEAL_TOOL: Anthropic.Tool = {
   name: 'create_meal',
@@ -70,7 +71,7 @@ const CREATE_MEAL_TOOL: Anthropic.Tool = {
           properties: {
             name: { type: 'string' },
             quantity: { type: 'number' },
-            unit: { type: 'string' },
+            unit: { type: 'string', description: 'Measurement unit: use "g" for solids, "ml" for liquids, "tsp"/"tbsp" for small amounts, or a natural count (e.g., "clove", "large", "medium")' },
           },
           required: ['name', 'quantity', 'unit'],
         },

@@ -84,6 +84,7 @@ Monorepo with npm workspaces:
 - **Meal type**: Optional `meal_type` (breakfast/lunch/dinner/snack) on meals; auto-detected by time of day on HomePage; passed to AI for context-appropriate generation; filterable in history
 - **Macro unit toggle**: Profile page supports grams/percent input for protein/carbs/fat; conversion is client-side only, DB always stores grams. `MacroTargetsSection` accepts optional `macroUnit`/`onMacroUnitChange` props — omit them (as HomePage does) for grams-only mode
 - **Shopping list**: `on_shopping_list` column on meals (INTEGER 0/1); only `accepted` meals can be on the list — moving a meal away from `accepted` clears it server-side; ShoppingListPage aggregates ingredients by name+unit, checkbox state stored in localStorage
+- **Ingredient units**: AI prompt and tool schema enforce consistent units — `g` for solids, `ml` for liquids, `tsp`/`tbsp` for small amounts, natural counts otherwise. This improves shopping list aggregation (grouping by `name|unit`).
 - **DB migrations**: New columns added via try/catch `ALTER TABLE` in `initializeDatabase()` — catches "duplicate column" for idempotency
 
 ## Deployment
