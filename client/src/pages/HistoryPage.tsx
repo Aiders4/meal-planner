@@ -14,7 +14,7 @@ import LoadMoreButton from './history/LoadMoreButton'
 const PAGE_SIZE = 20
 
 export default function HistoryPage() {
-  const [filter, setFilter] = useState<FilterValue>('all')
+  const [filter, setFilter] = useState<FilterValue>('accepted')
   const [mealTypeFilter, setMealTypeFilter] = useState<MealType | null>(null)
   const [meals, setMeals] = useState<Meal[]>([])
   const [total, setTotal] = useState(0)
@@ -75,6 +75,43 @@ export default function HistoryPage() {
     setLoadingMore(true)
     await fetchMeals(meals.length, true)
     setLoadingMore(false)
+  }
+
+  const [changingStatus, setChangingStatus] = useState<number | null>(null)
+
+  async function handleStatusChange(mealId: number, newStatus: 'accepted' | 'rejected') {
+    const meal = meals.find((m) => m.id === mealId)
+    if (!meal) return
+    setChangingStatus(mealId)
+    try {
+      await api(`/api/meals/${mealId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (meal.on_shopping_list && newStatus === 'rejected') {
+        toast.success('Removed from shopping list')
+      }
+      if (filter === 'all') {
+        setMeals((prev) =>
+          prev.map((m) =>
+            m.id === mealId
+              ? { ...m, status: newStatus, on_shopping_list: newStatus === 'accepted' ? m.on_shopping_list : false }
+              : m
+          )
+        )
+      } else {
+        setMeals((prev) => prev.filter((m) => m.id !== mealId))
+        setTotal((prev) => prev - 1)
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message)
+      } else {
+        toast.error('Failed to update meal status')
+      }
+    } finally {
+      setChangingStatus(null)
+    }
   }
 
   const [togglingShoppingList, setTogglingShoppingList] = useState<number | null>(null)
@@ -139,6 +176,8 @@ export default function HistoryPage() {
               targets={targets}
               onToggleShoppingList={handleToggleShoppingList}
               togglingShoppingList={togglingShoppingList === meal.id}
+              onStatusChange={handleStatusChange}
+              changingStatus={changingStatus === meal.id}
             />
           ))}
           {hasMore && (

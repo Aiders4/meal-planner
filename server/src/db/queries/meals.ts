@@ -122,10 +122,14 @@ export async function updateMealStatus(
   userId: number,
   status: string
 ): Promise<boolean> {
-  const result = await client.execute({
-    sql: 'UPDATE meals SET status = ? WHERE id = ? AND user_id = ?',
-    args: [status, mealId, userId],
-  });
+  const onShoppingList = status === 'accepted' ? undefined : 0;
+  const sql = onShoppingList !== undefined
+    ? 'UPDATE meals SET status = ?, on_shopping_list = ? WHERE id = ? AND user_id = ?'
+    : 'UPDATE meals SET status = ? WHERE id = ? AND user_id = ?';
+  const args = onShoppingList !== undefined
+    ? [status, onShoppingList, mealId, userId]
+    : [status, mealId, userId];
+  const result = await client.execute({ sql, args });
   return (result.rowsAffected ?? 0) > 0;
 }
 
@@ -216,6 +220,16 @@ export async function clearShoppingList(userId: number): Promise<number> {
   const result = await client.execute({
     sql: `UPDATE meals SET on_shopping_list = 0 WHERE user_id = ? AND on_shopping_list = 1`,
     args: [userId],
+  });
+  return result.rowsAffected ?? 0;
+}
+
+export async function pruneOldRejectedMeals(userId: number): Promise<number> {
+  const result = await client.execute({
+    sql: `DELETE FROM meals WHERE user_id = ? AND status = 'rejected' AND id NOT IN (
+      SELECT id FROM meals WHERE user_id = ? AND status = 'rejected' ORDER BY created_at DESC LIMIT 10
+    )`,
+    args: [userId, userId],
   });
   return result.rowsAffected ?? 0;
 }

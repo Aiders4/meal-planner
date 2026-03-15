@@ -64,7 +64,7 @@ Monorepo with npm workspaces:
 - `PUT /api/profile` — upsert macro targets + cook time + cuisine prefs
 - `PUT /api/profile/restrictions` — replace all dietary restrictions
 - `PUT /api/profile/disliked-ingredients` — replace all disliked ingredients
-- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target?, meal_type? }` optional per-meal overrides; falls back to profile defaults. Auto-deletes any pending meals first. Sends both accepted and rejected meal titles to AI for avoidance. Returns `{ meal, warnings }`
+- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target?, meal_type? }` optional per-meal overrides; falls back to profile defaults. Auto-deletes pending meals and prunes rejected beyond 10 most recent. Sends both accepted and rejected meal titles to AI for avoidance. Returns `{ meal, warnings }`
 - `GET /api/meals/pending` — returns `{ meal }` (most recent pending meal) or `{ meal: null }`
 - `GET /api/meals?status=accepted&meal_type=dinner&limit=20&offset=0` — paginated meal history with parsed `ingredients`/`instructions` arrays
 - `PATCH /api/meals/:id` — `{ status?, on_shopping_list? }` (at least one required) → `{ meal }`
@@ -79,11 +79,11 @@ Monorepo with npm workspaces:
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
 - **Async DB layer**: All query functions in `db/queries/` are `async` and return Promises — always `await` them in route handlers
 - **DB transactions**: Use `client.batch([...statements], 'write')` for atomic multi-statement operations
-- **Meal status lifecycle**: Pending meals auto-delete on new generation; rejected meal titles fed to AI for avoidance; HomePage resumes last pending meal on mount via `GET /api/meals/pending`
+- **Meal status lifecycle**: Pending meals auto-delete on new generation; rejected meals pruned to last 10 on generation; rejected meal titles fed to AI for avoidance; HomePage resumes last pending meal on mount via `GET /api/meals/pending`; accepted/rejected meals can be moved between statuses from HistoryPage (changing away from `accepted` auto-clears `on_shopping_list`)
 - **JSON column parsing**: Use `parseJsonColumn()` in `routes/meals.ts` instead of raw `JSON.parse` — handles double-stringified legacy data and discards corrupt pending meals gracefully
 - **Meal type**: Optional `meal_type` (breakfast/lunch/dinner/snack) on meals; auto-detected by time of day on HomePage; passed to AI for context-appropriate generation; filterable in history
 - **Macro unit toggle**: Profile page supports grams/percent input for protein/carbs/fat; conversion is client-side only, DB always stores grams. `MacroTargetsSection` accepts optional `macroUnit`/`onMacroUnitChange` props — omit them (as HomePage does) for grams-only mode
-- **Shopping list**: `on_shopping_list` column on meals (INTEGER 0/1); accepted meals can be toggled onto the list from History; ShoppingListPage aggregates ingredients by name+unit, checkbox state stored in localStorage
+- **Shopping list**: `on_shopping_list` column on meals (INTEGER 0/1); only `accepted` meals can be on the list — moving a meal away from `accepted` clears it server-side; ShoppingListPage aggregates ingredients by name+unit, checkbox state stored in localStorage
 - **DB migrations**: New columns added via try/catch `ALTER TABLE` in `initializeDatabase()` — catches "duplicate column" for idempotency
 
 ## Deployment

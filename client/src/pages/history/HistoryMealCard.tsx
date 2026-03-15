@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ShoppingCart, Check } from 'lucide-react'
+import { ChevronDown, ShoppingCart, Check, ArrowRightLeft } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,8 @@ interface HistoryMealCardProps {
   targets: MacroTargets
   onToggleShoppingList?: (mealId: number) => void
   togglingShoppingList?: boolean
+  onStatusChange?: (mealId: number, newStatus: 'accepted' | 'rejected') => void
+  changingStatus?: boolean
 }
 
 function StatusBadge({ status }: { status: Meal['status'] }) {
@@ -49,6 +51,8 @@ export default function HistoryMealCard({
   targets,
   onToggleShoppingList,
   togglingShoppingList,
+  onStatusChange,
+  changingStatus,
 }: HistoryMealCardProps) {
   const [expanded, setExpanded] = useState(false)
   const summary = macroSummary(meal)
@@ -101,27 +105,47 @@ export default function HistoryMealCard({
           <Separator />
           <IngredientsSection ingredients={meal.ingredients} />
           <InstructionsSection instructions={meal.instructions} />
-          {meal.status === 'accepted' && onToggleShoppingList && (
+          {(meal.status === 'accepted' || meal.status === 'rejected') && (
             <>
               <Separator />
-              <Button
-                variant={meal.on_shopping_list ? 'outline' : 'default'}
-                size="sm"
-                disabled={togglingShoppingList}
-                onClick={() => onToggleShoppingList(meal.id)}
-              >
-                {meal.on_shopping_list ? (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    On shopping list
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Add to shopping list
-                  </>
+              <div className="flex flex-wrap gap-2">
+                {meal.status === 'accepted' && onToggleShoppingList && (
+                  <Button
+                    variant={meal.on_shopping_list ? 'outline' : 'default'}
+                    size="sm"
+                    disabled={togglingShoppingList}
+                    onClick={() => onToggleShoppingList(meal.id)}
+                  >
+                    {meal.on_shopping_list ? (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        On list
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Add to list
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+                {onStatusChange && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={changingStatus}
+                    onClick={() =>
+                      onStatusChange(
+                        meal.id,
+                        meal.status === 'accepted' ? 'rejected' : 'accepted'
+                      )
+                    }
+                  >
+                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    {meal.status === 'accepted' ? 'Reject' : 'Accept'}
+                  </Button>
+                )}
+              </div>
             </>
           )}
         </CardContent>

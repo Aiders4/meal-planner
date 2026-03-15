@@ -16,6 +16,7 @@ import {
   getRecentRejectedMealTitles,
   deletePendingMeals,
   getPendingMeal,
+  pruneOldRejectedMeals,
 } from '../db/queries/meals.js';
 import { getProfile, getRestrictions, getDislikedIngredients } from '../db/queries/profiles.js';
 import { generateMeal, AIServiceError } from '../services/ai.js';
@@ -128,6 +129,7 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
     }
 
     await deletePendingMeals(userId);
+    await pruneOldRejectedMeals(userId);
 
     const restrictions = await getRestrictions(userId);
     const disliked = await getDislikedIngredients(userId);
