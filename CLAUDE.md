@@ -58,13 +58,17 @@ Monorepo with npm workspaces:
 | `VITE_API_URL` | client | Backend URL in production |
 
 ### API Routes
-- `POST /api/auth/register` — `{ email, password, invite_code }` → `{ token, user }` (403 if code wrong/missing when `INVITE_CODE` is set)
+- `POST /api/auth/register` — `{ email, password, username, invite_code }` → `{ token, user }` (403 if code wrong/missing when `INVITE_CODE` is set; username: 3-20 chars `[a-z0-9_]`)
 - `POST /api/auth/login` — `{ email, password }` → `{ token, user }`
+- `GET /api/auth/me` — returns `{ user: { id, email, username, created_at } }`
 - `GET /api/profile` — returns `{ profile, dietary_restrictions, disliked_ingredients }`
 - `PUT /api/profile` — upsert macro targets + cook time + cuisine prefs
 - `PUT /api/profile/restrictions` — replace all dietary restrictions
 - `PUT /api/profile/disliked-ingredients` — replace all disliked ingredients
-- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target?, meal_type? }` optional per-meal overrides; falls back to profile defaults. Auto-deletes pending meals and prunes rejected beyond 10 most recent. Sends both accepted and rejected meal titles to AI for avoidance. Returns `{ meal, warnings }`
+- `GET /api/partners` — returns `{ partners: [{ id, username }] }` (user's cooking partners)
+- `POST /api/partners` — `{ username }` → add partner. 404 if not found, 409 if already added, 400 if self.
+- `DELETE /api/partners/:partnerId` — remove partner from list
+- `POST /api/meals/generate` — `{ calorie_target?, protein_target?, carb_target?, fat_target?, meal_type?, partner_id? }` optional per-meal overrides; falls back to profile defaults. When `partner_id` set, merges both profiles (summed macros, unioned restrictions/dislikes, intersected cuisines, min cook time) and generates a 2-serving recipe. Auto-deletes pending meals and prunes rejected beyond 10 most recent. Sends both accepted and rejected meal titles to AI for avoidance. Returns `{ meal, warnings }`
 - `GET /api/meals/pending` — returns `{ meal }` (most recent pending meal) or `{ meal: null }`
 - `GET /api/meals?status=accepted&meal_type=dinner&limit=20&offset=0` — paginated meal history with parsed `ingredients`/`instructions` arrays
 - `PATCH /api/meals/:id` — `{ status?, on_shopping_list? }` (at least one required) → `{ meal }`
@@ -74,7 +78,7 @@ Monorepo with npm workspaces:
 ## Key Patterns
 - **Orchestrator pages**: ProfilePage, HomePage, HistoryPage, ShoppingListPage each own all state; child components are pure display
 - **Error handling**: `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
-- **Rate limiting**: `POST /api/meals/generate` — 10 requests per 15 min per IP + 10 per user per day (UTC)
+- **Rate limiting**: `POST /api/meals/generate` — 10 req/15 min per IP + 10/user/day (UTC); `POST /api/partners` — 20 req/15 min
 - **Security headers**: `helmet` middleware on all routes
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
 - **Async DB layer**: All query functions in `db/queries/` are `async` and return Promises — always `await` them in route handlers
@@ -86,6 +90,7 @@ Monorepo with npm workspaces:
 - **Shopping list**: `on_shopping_list` column on meals (INTEGER 0/1); only `accepted` meals can be on the list — moving a meal away from `accepted` clears it server-side; ShoppingListPage aggregates ingredients by name+unit, checkbox state stored in localStorage
 - **Ingredient units**: AI prompt and tool schema enforce consistent units — `g` for solids, `ml` for liquids, `tsp`/`tbsp` for small amounts, natural counts otherwise. This improves shopping list aggregation (grouping by `name|unit`).
 - **DB migrations**: New columns added via try/catch `ALTER TABLE` in `initializeDatabase()` — catches "duplicate column" for idempotency
+- **Cook together**: Users have usernames (set at registration). One-directional cooking partners (max 10, `cooking_partners` table, managed on Profile page). When `partner_id` passed to generate, server merges both profiles via `mergeProfiles()` in `services/profile-merge.ts` (macros summed, restrictions/dislikes unioned, cuisines intersected, cook time min'd), macro overrides ignored for partner meals, AI gets `servings: 2` context. Meal stored only under generating user. `findUserByUsername()` excludes `password_hash` from SELECT.
 
 ## Deployment
 - **Frontend**: Vercel with `client/vercel.json` for SPA rewrites

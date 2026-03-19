@@ -24,6 +24,7 @@ export interface GenerateMealInput {
     cuisine?: string;
     max_cook_time_minutes?: number;
   };
+  servings?: number;
 }
 
 export interface GeneratedMeal {
@@ -94,7 +95,14 @@ const CREATE_MEAL_TOOL: Anthropic.Tool = {
 };
 
 function buildUserMessage(input: GenerateMealInput): string {
-  const parts: string[] = ['Generate a meal with the following requirements:'];
+  const parts: string[] = [];
+
+  if (input.servings && input.servings > 1) {
+    parts.push(`Generate a meal for ${input.servings} people. The macro targets below are the combined total for all ${input.servings} servings.`);
+    parts.push('');
+  }
+
+  parts.push('Generate a meal with the following requirements:');
 
   if (input.calorie_target) {
     parts.push(`- Target calories: ${input.calorie_target} kcal`);
@@ -156,7 +164,7 @@ interface ValidationResult {
   errors: string[];
 }
 
-function validateMeal(meal: GeneratedMeal, maxCookTime: number | null): ValidationResult {
+function validateMeal(meal: GeneratedMeal, maxCookTime: number | null, servings: number = 1): ValidationResult {
   const warnings: string[] = [];
   const errors: string[] = [];
 
@@ -169,9 +177,10 @@ function validateMeal(meal: GeneratedMeal, maxCookTime: number | null): Validati
     );
   }
 
-  // Calorie range
-  if (meal.calories < 100 || meal.calories > 3000) {
-    errors.push(`Calories out of range: ${meal.calories} (must be 100-3000)`);
+  // Calorie range (scale max by servings)
+  const maxCalories = 3000 * servings;
+  if (meal.calories < 100 || meal.calories > maxCalories) {
+    errors.push(`Calories out of range: ${meal.calories} (must be 100-${maxCalories})`);
   }
 
   // Non-empty check
@@ -236,15 +245,16 @@ export async function generateMeal(input: GenerateMealInput): Promise<GenerateMe
   const userMessage = buildUserMessage(input);
   const effectiveMaxCook =
     input.preferences_override?.max_cook_time_minutes ?? input.max_cook_time_minutes;
+  const servings = input.servings ?? 1;
 
   let meal = await callClaudeAPI(userMessage);
-  let validation = validateMeal(meal, effectiveMaxCook);
+  let validation = validateMeal(meal, effectiveMaxCook, servings);
 
   // Retry once on hard failure
   if (!validation.valid) {
     console.warn('First AI attempt failed validation, retrying...', validation.errors);
     meal = await callClaudeAPI(userMessage);
-    validation = validateMeal(meal, effectiveMaxCook);
+    validation = validateMeal(meal, effectiveMaxCook, servings);
 
     if (!validation.valid) {
       throw new Error(`AI-generated meal failed validation: ${validation.errors.join('; ')}`);

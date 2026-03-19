@@ -13,6 +13,7 @@ import DietaryRestrictionsSection from './profile/DietaryRestrictionsSection'
 import CuisinePreferencesSection from './profile/CuisinePreferencesSection'
 import DislikedIngredientsSection from './profile/DislikedIngredientsSection'
 import CookTimeSection from './profile/CookTimeSection'
+import CookingPartnersSection from './profile/CookingPartnersSection'
 
 function emptyForm(): ProfileFormState {
   return {
@@ -52,8 +53,14 @@ function parseOptionalInt(value: string): number | null {
 
 const MACRO_FIELDS = ['protein_target', 'carb_target', 'fat_target'] as const
 
+interface Partner {
+  id: number
+  username: string
+}
+
 export default function ProfilePage() {
   const [form, setForm] = useState<ProfileFormState>(emptyForm)
+  const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -63,8 +70,11 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    api<ProfileResponse>('/api/profile')
-      .then((data) => {
+    Promise.all([
+      api<ProfileResponse>('/api/profile'),
+      api<{ partners: Partner[] }>('/api/partners'),
+    ])
+      .then(([data, partnerData]) => {
         const formData = responseToForm(data)
         const stored = localStorage.getItem(MACRO_UNIT_STORAGE_KEY)
         if (stored === 'percent' && formData.calorie_target.trim() !== '') {
@@ -73,6 +83,7 @@ export default function ProfilePage() {
           }
         }
         setForm(formData)
+        setPartners(partnerData.partners)
       })
       .catch(() => toast.error('Failed to load profile'))
       .finally(() => setLoading(false))
@@ -121,6 +132,37 @@ export default function ProfilePage() {
 
   function setCookTime(value: number) {
     setForm((prev) => ({ ...prev, max_cook_time_minutes: value }))
+  }
+
+  async function handleAddPartner(username: string) {
+    try {
+      const data = await api<{ partners: Partner[] }>('/api/partners', {
+        method: 'POST',
+        body: JSON.stringify({ username }),
+      })
+      setPartners(data.partners)
+      toast.success(`Added ${username} as a cooking partner`)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message)
+      } else {
+        toast.error('Failed to add partner')
+      }
+    }
+  }
+
+  async function handleRemovePartner(partnerId: number) {
+    try {
+      await api(`/api/partners/${partnerId}`, { method: 'DELETE' })
+      setPartners((prev) => prev.filter((p) => p.id !== partnerId))
+      toast.success('Partner removed')
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message)
+      } else {
+        toast.error('Failed to remove partner')
+      }
+    }
   }
 
   function handleMacroUnitChange(unit: MacroUnit) {
@@ -264,6 +306,12 @@ export default function ProfilePage() {
       <CookTimeSection
         value={form.max_cook_time_minutes}
         onChange={setCookTime}
+      />
+
+      <CookingPartnersSection
+        partners={partners}
+        onAdd={handleAddPartner}
+        onRemove={handleRemovePartner}
       />
 
       <Button

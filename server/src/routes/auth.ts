@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { timingSafeEqual } from 'crypto';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
-import { createUser, findUserByEmail, findUserById } from '../db/queries/users.js';
+import { createUser, findUserByEmail, findUserById, findUserByUsername } from '../db/queries/users.js';
 import { generateToken, requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -19,10 +19,14 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function isValidUsername(username: string): boolean {
+  return /^[a-z0-9_]{3,20}$/.test(username);
+}
+
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req, res, next) => {
   try {
-    const { email, password, invite_code } = req.body;
+    const { email, password, username, invite_code } = req.body;
 
     const expectedCode = process.env.INVITE_CODE;
     if (expectedCode) {
@@ -36,8 +40,13 @@ router.post('/register', authLimiter, async (req, res, next) => {
       }
     }
 
-    if (!email || !password) {
-      res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !password || !username) {
+      res.status(400).json({ error: 'Email, username, and password are required' });
+      return;
+    }
+
+    if (!isValidUsername(username)) {
+      res.status(400).json({ error: 'Username must be 3-20 characters, lowercase letters, numbers, and underscores only' });
       return;
     }
 
@@ -51,19 +60,25 @@ router.post('/register', authLimiter, async (req, res, next) => {
       return;
     }
 
-    const existing = await findUserByEmail(email);
-    if (existing) {
+    const existingEmail = await findUserByEmail(email);
+    if (existingEmail) {
       res.status(409).json({ error: 'Email already registered' });
       return;
     }
 
+    const existingUsername = await findUserByUsername(username);
+    if (existingUsername) {
+      res.status(409).json({ error: 'Username already taken' });
+      return;
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await createUser(email, passwordHash);
+    const user = await createUser(email, username, passwordHash);
     const token = generateToken({ userId: user.id, email: user.email });
 
     res.status(201).json({
       token,
-      user: { id: user.id, email: user.email, created_at: user.created_at },
+      user: { id: user.id, email: user.email, username: user.username, created_at: user.created_at },
     });
   } catch (err) {
     next(err);
@@ -96,7 +111,7 @@ router.post('/login', authLimiter, async (req, res, next) => {
 
     res.json({
       token,
-      user: { id: user.id, email: user.email, created_at: user.created_at },
+      user: { id: user.id, email: user.email, username: user.username, created_at: user.created_at },
     });
   } catch (err) {
     next(err);
@@ -113,7 +128,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
     }
 
     res.json({
-      user: { id: user.id, email: user.email, created_at: user.created_at },
+      user: { id: user.id, email: user.email, username: user.username, created_at: user.created_at },
     });
   } catch (err) {
     next(err);

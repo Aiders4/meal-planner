@@ -44,6 +44,36 @@ export async function initializeDatabase(): Promise<void> {
   } catch {
     // Column already exists — ignore
   }
+
+  // Migration: add username column to users table
+  try {
+    await client.execute("ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT ''");
+    // Backfill existing users with unique placeholder usernames
+    const existing = await client.execute("SELECT id FROM users WHERE username = ''");
+    for (const row of existing.rows) {
+      await client.execute({
+        sql: "UPDATE users SET username = ? WHERE id = ?",
+        args: [`user_${row.id}`, row.id],
+      });
+    }
+    // Now add the unique index
+    await client.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)");
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Migration: create cooking_partners table
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS cooking_partners (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      partner_id INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (partner_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, partner_id)
+    )
+  `);
 }
 
 export default client;

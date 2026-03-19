@@ -19,7 +19,9 @@ import {
   pruneOldRejectedMeals,
 } from '../db/queries/meals.js';
 import { getProfile, getRestrictions, getDislikedIngredients } from '../db/queries/profiles.js';
+import { isPartner } from '../db/queries/partners.js';
 import { generateMeal, AIServiceError } from '../services/ai.js';
+import { mergeProfiles } from '../services/profile-merge.js';
 
 const router = Router();
 
@@ -50,6 +52,7 @@ const generateSchema = z.object({
   carb_target: z.number().int().min(0).max(1000).nullable().optional(),
   fat_target: z.number().int().min(0).max(1000).nullable().optional(),
   meal_type: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).nullable().optional(),
+  partner_id: z.number().int().positive().nullable().optional(),
   preferences_override: z
     .object({
       cuisine: z.string().min(1).optional(),
@@ -135,12 +138,60 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
     const disliked = await getDislikedIngredients(userId);
     const recentTitles = await getRecentAcceptedMealTitles(userId, 10);
     const rejectedTitles = await getRecentRejectedMealTitles(userId, 10);
-    const cuisinePrefs: string[] = JSON.parse(profile.cuisine_preferences || '[]');
 
-    const effectiveCalorie = parsed.data.calorie_target !== undefined ? parsed.data.calorie_target : profile.calorie_target;
-    const effectiveProtein = parsed.data.protein_target !== undefined ? parsed.data.protein_target : profile.protein_target;
-    const effectiveCarb = parsed.data.carb_target !== undefined ? parsed.data.carb_target : profile.carb_target;
-    const effectiveFat = parsed.data.fat_target !== undefined ? parsed.data.fat_target : profile.fat_target;
+    const partnerId = parsed.data.partner_id;
+    let servings = 1;
+
+    let effectiveCalorie: number | null;
+    let effectiveProtein: number | null;
+    let effectiveCarb: number | null;
+    let effectiveFat: number | null;
+    let cuisinePrefs: string[];
+    let effectiveMaxCookTime: number | null;
+    let effectiveRestrictions: Array<{ category: string; value: string }>;
+    let effectiveDisliked: string[];
+
+    if (partnerId) {
+      const partnerLinked = await isPartner(userId, partnerId);
+      if (!partnerLinked) {
+        res.status(403).json({ error: 'User is not in your cooking partners list' });
+        return;
+      }
+
+      const partnerProfile = await getProfile(partnerId);
+      if (!partnerProfile) {
+        res.status(400).json({ error: 'Cooking partner has not set up their profile yet' });
+        return;
+      }
+
+      const partnerRestrictions = await getRestrictions(partnerId);
+      const partnerDisliked = await getDislikedIngredients(partnerId);
+
+      const merged = mergeProfiles(
+        profile, restrictions, disliked,
+        partnerProfile, partnerRestrictions, partnerDisliked,
+      );
+
+      // Always use merged macros for partner meals — ignore per-request overrides
+      effectiveCalorie = merged.calorie_target;
+      effectiveProtein = merged.protein_target;
+      effectiveCarb = merged.carb_target;
+      effectiveFat = merged.fat_target;
+      cuisinePrefs = merged.cuisine_preferences;
+      effectiveMaxCookTime = merged.max_cook_time_minutes;
+      effectiveRestrictions = merged.restrictions;
+      effectiveDisliked = merged.disliked_ingredients;
+      servings = 2;
+    } else {
+      effectiveCalorie = parsed.data.calorie_target !== undefined ? parsed.data.calorie_target : profile.calorie_target;
+      effectiveProtein = parsed.data.protein_target !== undefined ? parsed.data.protein_target : profile.protein_target;
+      effectiveCarb = parsed.data.carb_target !== undefined ? parsed.data.carb_target : profile.carb_target;
+      effectiveFat = parsed.data.fat_target !== undefined ? parsed.data.fat_target : profile.fat_target;
+      cuisinePrefs = JSON.parse(profile.cuisine_preferences || '[]');
+      effectiveMaxCookTime = profile.max_cook_time_minutes;
+      effectiveRestrictions = restrictions.map((r) => ({ category: r.category, value: r.value }));
+      effectiveDisliked = disliked.map((d) => d.ingredient);
+    }
 
     const { meal, warnings } = await generateMeal({
       calorie_target: effectiveCalorie,
@@ -149,12 +200,13 @@ router.post('/generate', generateLimiter, async (req, res, next) => {
       fat_target: effectiveFat,
       meal_type: parsed.data.meal_type ?? null,
       cuisine_preferences: cuisinePrefs,
-      max_cook_time_minutes: profile.max_cook_time_minutes,
-      restrictions: restrictions.map((r) => ({ category: r.category, value: r.value })),
-      disliked_ingredients: disliked.map((d) => d.ingredient),
+      max_cook_time_minutes: effectiveMaxCookTime,
+      restrictions: effectiveRestrictions,
+      disliked_ingredients: effectiveDisliked,
       recent_meal_titles: recentTitles,
       recent_rejected_titles: rejectedTitles,
       preferences_override: parsed.data.preferences_override,
+      servings,
     });
 
     const saved = await createMeal(userId, {

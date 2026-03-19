@@ -12,16 +12,22 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const [inviteCode, setInviteCode] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [errors, setErrors] = useState<{ inviteCode?: string; email?: string; password?: string; confirmPassword?: string }>({})
+  const [errors, setErrors] = useState<{ inviteCode?: string; username?: string; email?: string; password?: string; confirmPassword?: string }>({})
   const [submitting, setSubmitting] = useState(false)
 
   function validate(): boolean {
     const next: typeof errors = {}
     if (!inviteCode.trim()) {
       next.inviteCode = 'Invite code is required'
+    }
+    if (!username.trim()) {
+      next.username = 'Username is required'
+    } else if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      next.username = 'Must be 3-20 characters: lowercase letters, numbers, underscores'
     }
     if (!email.trim()) {
       next.email = 'Email is required'
@@ -46,7 +52,7 @@ export default function RegisterPage() {
 
     setSubmitting(true)
     try {
-      await register(email, password, inviteCode)
+      await register(email, password, username, inviteCode)
       navigate('/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {
@@ -79,6 +85,20 @@ export default function RegisterPage() {
               />
               {errors.inviteCode && (
                 <p className="text-sm text-destructive">{errors.inviteCode}</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="your_username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              />
+              <p className="text-xs text-muted-foreground">3-20 characters: lowercase letters, numbers, underscores</p>
+              {errors.username && (
+                <p className="text-sm text-destructive">{errors.username}</p>
               )}
             </div>
             <div className="flex flex-col gap-2">

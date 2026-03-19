@@ -10,7 +10,13 @@ import NoProfileAlert from './home/NoProfileAlert'
 import GenerateButton from './home/GenerateButton'
 import MealCard from './home/MealCard'
 import MealTypeSelector from './home/MealTypeSelector'
+import PartnerSelector from './home/PartnerSelector'
 import MacroTargetsSection from './profile/MacroTargetsSection'
+
+interface Partner {
+  id: number
+  username: string
+}
 
 function parseOptionalInt(value: string): number | null {
   if (value.trim() === '') return null
@@ -39,13 +45,18 @@ export default function HomePage() {
     fat_target: null,
   })
   const [mealType, setMealType] = useState<MealType | null>(() => getDefaultMealType())
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [partnerId, setPartnerId] = useState<number | null>(null)
   const [meal, setMeal] = useState<Meal | null>(null)
   const [generating, setGenerating] = useState(false)
   const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
-    api<ProfileResponse>('/api/profile')
-      .then((data) => {
+    Promise.all([
+      api<ProfileResponse>('/api/profile'),
+      api<{ partners: Partner[] }>('/api/partners'),
+    ])
+      .then(([data, partnerData]) => {
         if (data.profile !== null) {
           setHasProfile(true)
           const defaults: MacroTargets = {
@@ -62,6 +73,7 @@ export default function HomePage() {
             carb_target: defaults.carb_target != null ? String(defaults.carb_target) : '',
             fat_target: defaults.fat_target != null ? String(defaults.fat_target) : '',
           })
+          setPartners(partnerData.partners)
 
           // Resume pending meal if one exists
           api<{ meal: Meal | null }>('/api/meals/pending')
@@ -119,15 +131,21 @@ export default function HomePage() {
     setGenerating(true)
     setMeal(null)
     try {
+      const body: Record<string, unknown> = {
+        meal_type: mealType,
+        partner_id: partnerId,
+      }
+      // When cooking with a partner, let the server compute merged macros
+      // from both profiles. Only send overrides for solo meals.
+      if (!partnerId) {
+        body.calorie_target = targets.calorie_target
+        body.protein_target = targets.protein_target
+        body.carb_target = targets.carb_target
+        body.fat_target = targets.fat_target
+      }
       const data = await api<GenerateResponse>('/api/meals/generate', {
         method: 'POST',
-        body: JSON.stringify({
-          calorie_target: targets.calorie_target,
-          protein_target: targets.protein_target,
-          carb_target: targets.carb_target,
-          fat_target: targets.fat_target,
-          meal_type: mealType,
-        }),
+        body: JSON.stringify(body),
       })
       setMeal(data.meal)
       if (data.warnings.length > 0) {
@@ -185,6 +203,9 @@ export default function HomePage() {
     <div className="mx-auto max-w-2xl space-y-6 py-8">
       {meal ? (
         <>
+          {partnerId && (
+            <p className="text-center text-sm font-medium text-muted-foreground">Serves 2</p>
+          )}
           <MealCard
             meal={meal}
             targets={usedTargets}
@@ -197,15 +218,16 @@ export default function HomePage() {
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center gap-6 py-12 text-center">
+        <div className="flex flex-col items-center gap-4 py-2 text-center">
           <div>
             <h2 className="text-2xl font-bold">Generate a Meal</h2>
             <p className="text-muted-foreground">
               Adjust targets for this meal, then generate.
             </p>
           </div>
-          <div className="w-full max-w-md text-left">
+          <div className="w-full max-w-md text-left space-y-4">
             <MealTypeSelector value={mealType} onChange={setMealType} />
+            <PartnerSelector partners={partners} value={partnerId} onChange={setPartnerId} />
           </div>
           <div className="w-full max-w-md text-left">
             <MacroTargetsSection
