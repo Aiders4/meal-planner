@@ -72,7 +72,7 @@ export default function RegisterPage() {
           <CardTitle className="text-2xl">Meal Planner</CardTitle>
           <CardDescription>Create your account</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <CardContent className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="inviteCode">Invite Code</Label>
