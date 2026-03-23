@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Meal Planner</title>
+    <title>Carte</title>
   </head>
   <body>
     <div id="root"></div>
     <script>
       (function() {
-        var s = localStorage.getItem('meal-planner-dark-mode');
+        var s = localStorage.getItem('carte-dark-mode');
         var d = s !== null ? s === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (d) document.documentElement.classList.add('dark');
       })();

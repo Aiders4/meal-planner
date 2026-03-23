@@ -1,7 +1,10 @@
-# Meal Planner — Claude Code Guide
+# Carte — Claude Code Guide
 
 ## Project Overview
-AI meal planner web app. Users set dietary constraints and macro targets, AI generates meals that fit. All 10 build phases are complete.
+AI meal planner web app. Users set dietary constraints and macro targets, AI generates meals that fit.
+
+## Branding
+App name is **Carte**. Appears in: `client/index.html` (title + inline dark mode script), `AppLayout.tsx` (header), `LoginPage.tsx`, `RegisterPage.tsx`. localStorage keys prefixed `carte-`. Database default `carte.db`.
 
 ## Structure
 Monorepo with npm workspaces:
@@ -49,7 +52,7 @@ Monorepo with npm workspaces:
 |----------|-------|---------|
 | `PORT` | server | Server port (default 3001) |
 | `JWT_SECRET` | server | JWT signing key |
-| `DATABASE_PATH` | server | SQLite file path for local dev (default `./data/meal-planner.db`) |
+| `DATABASE_PATH` | server | SQLite file path for local dev (default `./data/carte.db`) |
 | `ANTHROPIC_API_KEY` | server | Claude API key |
 | `TURSO_DATABASE_URL` | server | Turso database URL (production only) |
 | `TURSO_AUTH_TOKEN` | server | Turso auth token (production only) |

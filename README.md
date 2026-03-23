@@ -1,4 +1,4 @@
-# AI Meal Planner
+# Carte
 
 Define your dietary constraints and macro targets once — get AI-generated meals that actually work for you.
 
@@ -20,7 +20,7 @@ A web app where you set up your nutritional goals, dietary restrictions, and foo
 ## Project Structure
 
 ```
-meal-planner/
+carte/
 ├── client/          # React frontend
 │   └── src/
 │       ├── components/
@@ -50,8 +50,8 @@ meal-planner/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<your-username>/meal-planner.git
-   cd meal-planner
+   git clone https://github.com/<your-username>/carte.git
+   cd carte
    ```
 
 2. Install dependencies:
@@ -67,7 +67,7 @@ meal-planner/
    ```env
    PORT=3001
    JWT_SECRET=generate-a-random-64-char-string-here
-   DATABASE_PATH=./data/meal-planner.db
+   DATABASE_PATH=./data/carte.db
    ANTHROPIC_API_KEY=sk-ant-your-key-here
    ```
 
@@ -105,7 +105,7 @@ meal-planner/
    |----------|-------|
    | `PORT` | `3001` (or let Render assign) |
    | `JWT_SECRET` | A random 64-character string |
-   | `DATABASE_PATH` | `/data/meal-planner.db` |
+   | `DATABASE_PATH` | `/data/carte.db` |
    | `ANTHROPIC_API_KEY` | Your Anthropic API key |
    | `CORS_ORIGIN` | Your Vercel frontend URL (e.g. `https://your-app.vercel.app`) |
 

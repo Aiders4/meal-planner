@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-const STORAGE_KEY = 'meal-planner-dark-mode'
+const STORAGE_KEY = 'carte-dark-mode'
 
 function getInitialDark(): boolean {
   const stored = localStorage.getItem(STORAGE_KEY)

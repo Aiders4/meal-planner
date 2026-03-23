@@ -50,7 +50,7 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 
 ### Login / Register
 - Card: `max-w-sm` centered both axes
-- App title "Meal Planner" as `<h1>` inside card
+- App title "Carte" as `<h1>` inside card
 - Subtitle: "Welcome back" (login) / "Create your account" (register)
 - Register form includes "Invite Code" field above email (required when server has `INVITE_CODE` set)
 - Form fields stacked vertically with `gap-4`
@@ -61,7 +61,7 @@ Using **shadcn/ui** (new-york style, neutral base color, CSS variables enabled).
 
 ### App Shell Header
 - Full-width, sticky top, `border-b`
-- Left: App name "Meal Planner" (link to `/`)
+- Left: App name "Carte" (link to `/`)
 - Center/Right: Nav links (Home, Profile, History)
 - Far right: Dark mode toggle + Logout button
 - Mobile: Hamburger icon replaces nav links, opens vertical menu

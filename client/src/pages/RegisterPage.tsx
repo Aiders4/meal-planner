@@ -69,7 +69,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Meal Planner</CardTitle>
+          <CardTitle className="text-2xl">Carte</CardTitle>
           <CardDescription>Create your account</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">

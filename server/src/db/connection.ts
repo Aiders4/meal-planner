@@ -10,12 +10,12 @@ const client = isProduction
       authToken: process.env.TURSO_AUTH_TOKEN!,
     })
   : createClient({
-      url: `file:${process.env.DATABASE_PATH || './data/meal-planner.db'}`,
+      url: `file:${process.env.DATABASE_PATH || './data/carte.db'}`,
     });
 
 // Ensure data directory exists for local development
 if (!isProduction) {
-  const dbPath = process.env.DATABASE_PATH || './data/meal-planner.db';
+  const dbPath = process.env.DATABASE_PATH || './data/carte.db';
   const dir = path.dirname(path.resolve(dbPath));
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

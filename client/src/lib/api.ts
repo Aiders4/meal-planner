@@ -1,5 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_URL || ''
-const TOKEN_KEY = 'meal-planner-token'
+const TOKEN_KEY = 'carte-token'
 
 export class ApiError extends Error {
   status: number

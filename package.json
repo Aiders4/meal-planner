@@ -1,5 +1,5 @@
 {
-  "name": "meal-planner",
+  "name": "carte",
   "private": true,
   "workspaces": [
     "client",

@@ -46,7 +46,7 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b bg-background">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <NavLink to="/" className="text-lg font-semibold">
-            Meal Planner
+            Carte
           </NavLink>
 
           {/* Desktop nav */}
