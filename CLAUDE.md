@@ -4,7 +4,7 @@
 AI meal planner web app. Users set dietary constraints and macro targets, AI generates meals that fit.
 
 ## Branding
-App name is **Carte**. Appears in: `client/index.html` (title + inline dark mode script), `AppLayout.tsx` (header), `LoginPage.tsx`, `RegisterPage.tsx`. localStorage keys prefixed `carte-`. Database default `carte.db`.
+App name is **Carte**. Appears in: `client/index.html` (title + inline dark mode script), `AppLayout.tsx` (header), `LoginPage.tsx`, `RegisterPage.tsx`. localStorage keys prefixed `carte-`. Database default `carte.db`. Favicon is `client/public/favicon.svg` — inline SVG with C-plate + fork/knife, uses `prefers-color-scheme` media query for dark mode (`#1a1a1a` light, `#fafafa` dark). Matches the neutral grayscale palette from `design/decisions.md`.
 
 ## Structure
 Monorepo with npm workspaces:

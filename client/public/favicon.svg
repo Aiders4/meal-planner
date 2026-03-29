@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .rim { stroke: #1a1a1a; fill: none; }
+    .utensil { fill: #1a1a1a; stroke: #1a1a1a;
+               stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+    @media (prefers-color-scheme: dark) {
+      .rim { stroke: #fafafa; }
+      .utensil { fill: #fafafa; stroke: #fafafa; }
+    }
+  </style>
+  <path class="rim" d="M 76 20 A 40 40 0 1 0 76 80"
+        stroke-width="10" stroke-linecap="round"/>
+  <path class="utensil" d="M 38 30 L 38 44 L 40.5 44 L 40.5 70
+        L 43.5 70 L 43.5 44 L 46 44 L 46 30
+        L 44 30 L 44 42 L 40 42 L 40 30 Z"/>
+  <path class="utensil" d="M 56 30 L 56 70 L 59 70
+        L 59 50 Q 65 40 59 30 Z"/>
+</svg>
