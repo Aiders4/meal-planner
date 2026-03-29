@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { api, ApiError } from '@/lib/api'
+import { useAuth } from '@/context/AuthContext'
 import { validateMacroInputs } from '@/lib/validation'
 import { COOK_TIME_DEFAULT, MACRO_UNIT_STORAGE_KEY } from '@/lib/constants'
 import { convertMacroField } from '@/lib/macro-conversion'
@@ -59,6 +60,7 @@ interface Partner {
 }
 
 export default function ProfilePage() {
+  const { user } = useAuth()
   const [form, setForm] = useState<ProfileFormState>(emptyForm)
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
@@ -269,6 +271,9 @@ export default function ProfilePage() {
       <div>
         <h1 className="text-2xl font-bold">Profile</h1>
         <p className="text-muted-foreground">Configure your dietary preferences and goals.</p>
+        {user && (
+          <p className="text-sm text-muted-foreground">Username: <span className="font-medium text-foreground">{user.username}</span></p>
+        )}
       </div>
 
       <Separator />
