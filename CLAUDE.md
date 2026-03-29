@@ -80,7 +80,7 @@ Monorepo with npm workspaces:
 
 ## Key Patterns
 - **Orchestrator pages**: ProfilePage, HomePage, HistoryPage, ShoppingListPage each own all state; child components are pure display
-- **Error handling**: `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
+- **Error handling**: `ErrorBoundary` in `src/components/ErrorBoundary.tsx` wraps the entire app tree in `main.tsx` (outside router/auth) — catches render crashes with a fallback UI + reload button. `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
 - **Rate limiting**: `POST /api/meals/generate` — 10 req/15 min per IP + 10/user/day (UTC); `POST /api/partners` — 20 req/15 min
 - **Security headers**: `helmet` middleware on all routes
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
