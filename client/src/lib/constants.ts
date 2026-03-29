@@ -27,6 +27,23 @@ export const SHOPPING_CHECKS_STORAGE_KEY = 'carte-shopping-checks'
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
 export type MealType = (typeof MEAL_TYPES)[number]
 
+export const COOKING_MESSAGES = [
+  'Simmering...',
+  'Stewing...',
+  'Dicing...',
+  'Sautéing...',
+  'Marinating...',
+  'Whisking...',
+  'Seasoning...',
+  'Braising...',
+  'Blanching...',
+  'Garnishing...',
+  'Caramelizing...',
+  'Folding...',
+  'Reducing...',
+  'Infusing...',
+]
+
 export function getDefaultMealType(): MealType {
   const hour = new Date().getHours()
   if (hour >= 21 || hour < 11) {
