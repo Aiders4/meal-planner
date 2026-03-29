@@ -5,10 +5,15 @@ import fs from 'fs';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const client = isProduction
-  ? createClient({
-      url: process.env.TURSO_DATABASE_URL!,
-      authToken: process.env.TURSO_AUTH_TOKEN!,
-    })
+  ? (() => {
+      const url = process.env.TURSO_DATABASE_URL;
+      const authToken = process.env.TURSO_AUTH_TOKEN;
+      if (!url || !authToken) {
+        console.error('FATAL: TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are required in production');
+        process.exit(1);
+      }
+      return createClient({ url, authToken });
+    })()
   : createClient({
       url: `file:${process.env.DATABASE_PATH || './data/carte.db'}`,
     });

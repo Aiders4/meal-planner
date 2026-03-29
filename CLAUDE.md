@@ -48,17 +48,17 @@ Monorepo with npm workspaces:
 
 ### Environment Variables
 
-| Variable | Where | Purpose |
-|----------|-------|---------|
-| `PORT` | server | Server port (default 3001) |
-| `JWT_SECRET` | server | JWT signing key |
-| `DATABASE_PATH` | server | SQLite file path for local dev (default `./data/carte.db`) |
-| `ANTHROPIC_API_KEY` | server | Claude API key |
-| `TURSO_DATABASE_URL` | server | Turso database URL (production only) |
-| `TURSO_AUTH_TOKEN` | server | Turso auth token (production only) |
-| `INVITE_CODE` | server | Registration invite code (unset = open registration) |
-| `CORS_ORIGIN` | server | Frontend URL for CORS in production |
-| `VITE_API_URL` | client | Backend URL in production |
+| Variable | Where | Required | Purpose |
+|----------|-------|----------|---------|
+| `PORT` | server | No (default 3001) | Server port |
+| `JWT_SECRET` | server | **Yes** — fatal on startup | JWT signing key |
+| `DATABASE_PATH` | server | No (default `./data/carte.db`) | SQLite file path for local dev |
+| `ANTHROPIC_API_KEY` | server | No — warns on startup | Claude API key |
+| `TURSO_DATABASE_URL` | server | **Yes in production** — fatal on startup | Turso database URL |
+| `TURSO_AUTH_TOKEN` | server | **Yes in production** — fatal on startup | Turso auth token |
+| `INVITE_CODE` | server | No (unset = open registration) | Registration invite code |
+| `CORS_ORIGIN` | server | No — warns in production | Frontend URL for CORS |
+| `VITE_API_URL` | client | No | Backend URL in production |
 
 ### API Routes
 - `POST /api/auth/register` — `{ email, password, username, invite_code }` → `{ token, user }` (403 if code wrong/missing when `INVITE_CODE` is set; username: 3-20 chars `[a-z0-9_]`)
@@ -82,6 +82,7 @@ Monorepo with npm workspaces:
 - **Orchestrator pages**: ProfilePage, HomePage, HistoryPage, ShoppingListPage each own all state; child components are pure display
 - **Error handling**: `ErrorBoundary` in `src/components/ErrorBoundary.tsx` wraps the entire app tree in `main.tsx` (outside router/auth) — catches render crashes with a fallback UI + reload button. `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
 - **Rate limiting**: `POST /api/meals/generate` — 10 req/15 min per IP + 10/user/day (UTC); `POST /api/partners` — 20 req/15 min
+- **Startup env validation**: `index.ts` validates `JWT_SECRET` (fatal) and warns on missing `ANTHROPIC_API_KEY`; `connection.ts` validates `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` in production (fatal). New required env vars should follow this pattern — fail fast at startup, not at first request
 - **Security headers**: `helmet` middleware on all routes
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
 - **Async DB layer**: All query functions in `db/queries/` are `async` and return Promises — always `await` them in route handlers

@@ -42,6 +42,14 @@ app.use('/api/partners', partnersRoutes);
 app.use(errorHandler);
 
 async function start() {
+  if (!process.env.JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET environment variable is required');
+    process.exit(1);
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn('WARNING: ANTHROPIC_API_KEY is not set — meal generation will fail');
+  }
+
   await initializeDatabase();
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
