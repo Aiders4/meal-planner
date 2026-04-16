@@ -64,5 +64,7 @@ CREATE TABLE IF NOT EXISTS disliked_ingredients (
 );
 
 CREATE INDEX IF NOT EXISTS idx_meals_user_id ON meals(user_id);
+CREATE INDEX IF NOT EXISTS idx_meals_user_status_created ON meals(user_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_dietary_restrictions_user_id ON dietary_restrictions(user_id);
 CREATE INDEX IF NOT EXISTS idx_disliked_ingredients_user_id ON disliked_ingredients(user_id);
+CREATE INDEX IF NOT EXISTS idx_cooking_partners_partner_id ON cooking_partners(partner_id);

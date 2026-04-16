@@ -79,6 +79,10 @@ export async function initializeDatabase(): Promise<void> {
       UNIQUE(user_id, partner_id)
     )
   `);
+
+  // Migration: indexes for cascade-delete scans and dominant meals query shape
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_cooking_partners_partner_id ON cooking_partners(partner_id)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_meals_user_status_created ON meals(user_id, status, created_at DESC)');
 }
 
 export default client;
