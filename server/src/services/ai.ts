@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '../lib/logger.js';
 
 let _anthropic: Anthropic | null = null;
 function getClient(): Anthropic {
@@ -227,7 +228,7 @@ async function callClaudeAPI(userMessage: string): Promise<GeneratedMeal> {
       if (err.status === 429) {
         throw new AIServiceError('AI service is temporarily busy. Please try again in a few minutes.', 503);
       }
-      console.error('Anthropic API error:', err.status, err.message);
+      logger.error({ status: err.status, message: err.message }, 'Anthropic API error');
       throw new AIServiceError('AI service is currently unavailable. Please try again later.', 503);
     }
     throw err;
@@ -252,7 +253,7 @@ export async function generateMeal(input: GenerateMealInput): Promise<GenerateMe
 
   // Retry once on hard failure
   if (!validation.valid) {
-    console.warn('First AI attempt failed validation, retrying...', validation.errors);
+    logger.warn({ errors: validation.errors }, 'First AI attempt failed validation, retrying');
     meal = await callClaudeAPI(userMessage);
     validation = validateMeal(meal, effectiveMaxCook, servings);
 

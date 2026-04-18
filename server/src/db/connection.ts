@@ -1,6 +1,7 @@
 import { createClient } from '@libsql/client';
 import path from 'path';
 import fs from 'fs';
+import { logger } from '../lib/logger.js';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -9,7 +10,7 @@ const client = isProduction
       const url = process.env.TURSO_DATABASE_URL;
       const authToken = process.env.TURSO_AUTH_TOKEN;
       if (!url || !authToken) {
-        console.error('FATAL: TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are required in production');
+        logger.fatal('TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are required in production');
         process.exit(1);
       }
       return createClient({ url, authToken });

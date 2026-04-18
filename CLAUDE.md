@@ -58,6 +58,7 @@ Monorepo with npm workspaces:
 | `TURSO_AUTH_TOKEN` | server | **Yes in production** — fatal on startup | Turso auth token |
 | `INVITE_CODE` | server | No (unset = open registration) | Registration invite code |
 | `CORS_ORIGIN` | server | **Yes in production** — fatal on startup | Frontend URL for CORS |
+| `LOG_LEVEL` | server | No (default `info` in prod, `debug` in dev) | pino log level |
 | `VITE_API_URL` | client | No | Backend URL in production |
 
 ### API Routes
@@ -80,7 +81,8 @@ Monorepo with npm workspaces:
 
 ## Key Patterns
 - **Orchestrator pages**: ProfilePage, HomePage, HistoryPage, ShoppingListPage each own all state; child components are pure display
-- **Error handling**: `ErrorBoundary` in `src/components/ErrorBoundary.tsx` wraps the entire app tree in `main.tsx` (outside router/auth) — catches render crashes with a fallback UI + reload button. `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
+- **Error handling**: `ErrorBoundary` in `src/components/ErrorBoundary.tsx` wraps the entire app tree in `main.tsx` (outside router/auth) — catches render crashes with a fallback UI + reload button. `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces via `req.log.error`
+- **Logging**: `server/src/lib/logger.ts` exports a shared `pino` instance (pretty dev / JSON prod). `pino-http` auto-logs every request with `{ reqId, method, url, statusCode, responseTime }` and honors inbound `X-Request-ID` (capped at 128 chars). Use `req.log.*` inside handlers/middleware so logs inherit `reqId`; import `logger` directly in startup/services. Redacted paths (`authorization`/`cookie` headers, `password*`) live in `lib/logger.ts` — add new sensitive keys there. To log a new field from the request itself, extend the `req` serializer in `index.ts`
 - **Rate limiting**: `POST /api/meals/generate` — 10 req/15 min per IP + 10/user/day (UTC); `POST /api/partners` — 20 req/15 min
 - **Startup env validation**: `index.ts` validates `JWT_SECRET` (fatal), `CORS_ORIGIN` in production (fatal), and warns on missing `ANTHROPIC_API_KEY`; `connection.ts` validates `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` in production (fatal). New required env vars should follow this pattern — fail fast at startup, not at first request
 - **Security headers**: `helmet` middleware on all routes
