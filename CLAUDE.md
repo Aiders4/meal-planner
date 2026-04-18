@@ -87,6 +87,7 @@ Monorepo with npm workspaces:
 - **Startup env validation**: `index.ts` validates `JWT_SECRET` (fatal), `CORS_ORIGIN` in production (fatal), and warns on missing `ANTHROPIC_API_KEY`; `connection.ts` validates `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` in production (fatal). New required env vars should follow this pattern — fail fast at startup, not at first request
 - **Security headers**: `helmet` middleware on all routes
 - **Auth token storage**: JWT in `localStorage['carte-token']` sent as `Authorization: Bearer`. Move to httpOnly cookies has been deferred — frontend (Vercel) and backend (Render) are cross-site, so cookies would need `SameSite=None; Secure`, which Safari ITP / strict cookie settings can drop. Revisit only if Carte moves to a custom domain where API + frontend share an eTLD+1 (e.g. `carte.app` + `api.carte.app`)
+- **JWT revocation**: None — tokens are valid until 7-day expiry. Blocklist / refresh-token rotation / `token_version` all deferred; `requireAuth` does zero DB reads by design, and no password-change or logout-everywhere feature exists to justify the per-request cost. Revisit when any of those triggers (or a known leak) lands; `token_version` on `users` is the intended variant
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
 - **Async DB layer**: All query functions in `db/queries/` are `async` and return Promises — always `await` them in route handlers
 - **DB transactions**: Use `client.batch([...statements], 'write')` for atomic multi-statement operations
