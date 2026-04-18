@@ -57,7 +57,7 @@ Monorepo with npm workspaces:
 | `TURSO_DATABASE_URL` | server | **Yes in production** — fatal on startup | Turso database URL |
 | `TURSO_AUTH_TOKEN` | server | **Yes in production** — fatal on startup | Turso auth token |
 | `INVITE_CODE` | server | No (unset = open registration) | Registration invite code |
-| `CORS_ORIGIN` | server | No — warns in production | Frontend URL for CORS |
+| `CORS_ORIGIN` | server | **Yes in production** — fatal on startup | Frontend URL for CORS |
 | `VITE_API_URL` | client | No | Backend URL in production |
 
 ### API Routes
@@ -82,7 +82,7 @@ Monorepo with npm workspaces:
 - **Orchestrator pages**: ProfilePage, HomePage, HistoryPage, ShoppingListPage each own all state; child components are pure display
 - **Error handling**: `ErrorBoundary` in `src/components/ErrorBoundary.tsx` wraps the entire app tree in `main.tsx` (outside router/auth) — catches render crashes with a fallback UI + reload button. `AIServiceError` in `ai.ts` wraps Anthropic errors with user-friendly messages; error middleware logs full stack traces
 - **Rate limiting**: `POST /api/meals/generate` — 10 req/15 min per IP + 10/user/day (UTC); `POST /api/partners` — 20 req/15 min
-- **Startup env validation**: `index.ts` validates `JWT_SECRET` (fatal) and warns on missing `ANTHROPIC_API_KEY`; `connection.ts` validates `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` in production (fatal). New required env vars should follow this pattern — fail fast at startup, not at first request
+- **Startup env validation**: `index.ts` validates `JWT_SECRET` (fatal), `CORS_ORIGIN` in production (fatal), and warns on missing `ANTHROPIC_API_KEY`; `connection.ts` validates `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` in production (fatal). New required env vars should follow this pattern — fail fast at startup, not at first request
 - **Security headers**: `helmet` middleware on all routes
 - **Auth token storage**: JWT in `localStorage['carte-token']` sent as `Authorization: Bearer`. Move to httpOnly cookies has been deferred — frontend (Vercel) and backend (Render) are cross-site, so cookies would need `SameSite=None; Secure`, which Safari ITP / strict cookie settings can drop. Revisit only if Carte moves to a custom domain where API + frontend share an eTLD+1 (e.g. `carte.app` + `api.carte.app`)
 - **Profile save**: 3 PUT endpoints called in parallel (`/profile`, `/restrictions`, `/disliked-ingredients`)
